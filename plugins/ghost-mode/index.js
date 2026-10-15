@@ -6,7 +6,8 @@
  * - не отправляет «печатает…» / «записывает…»;
  * - по желанию: читает чат при отправке в него сообщения;
  * - кнопка-призрак в шапке списка чатов: клик — вкл/выкл, правый клик — настройки;
- * - Ctrl+Shift+G — вкл/выкл, Alt+R — прочитать открытый чат вручную.
+ * - Ctrl+Shift+G — вкл/выкл, Alt+R — прочитать открытый чат вручную;
+ * - при выключении открытый чат сразу отмечается прочитанным.
  *
  * Работает поверх `window.ethernet.api.beforeRequest`, настройки — в localStorage.
  * Главный переключатель общий со встроенным режимом призрака клиента (`window.taurigramGhost`):
@@ -91,6 +92,8 @@
     settings.enabled = isEnabled;
     getBuiltinGhost()?.setEnabled(isEnabled, getCurrentUserId());
     saveSettings();
+    // Без этого уже видимые сообщения отметятся прочитанными только при следующей прокрутке
+    if (!isEnabled) readChat(getCurrentChatId());
   }
 
   function isActive(option) {
