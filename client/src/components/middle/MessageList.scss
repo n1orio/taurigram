@@ -97,6 +97,11 @@
   &.with-bottom-snap {
     scroll-padding-bottom: var(--message-list-bottom-inset);
     scroll-snap-type: y proximity;
+
+    // WebKitGTK keeps wheel and touchpad scrolling trapped inside a proximity snap area
+    body.is-linux.is-safari & {
+      scroll-snap-type: none;
+    }
   }
 
   .messages-container {

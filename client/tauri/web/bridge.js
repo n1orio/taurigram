@@ -142,6 +142,24 @@
     if (isDragTarget(e.target)) e.stopPropagation();
   }, true);
 
+  // Ошибки страницы — в лог приложения (stdout и файл логов), чтобы их было видно без DevTools
+  const LOG_LEVEL_ERROR = 5;
+  const MAX_LOGGED_ERRORS = 200;
+  let loggedErrors = 0;
+
+  function logError(message) {
+    if (loggedErrors >= MAX_LOGGED_ERRORS) return;
+    loggedErrors += 1;
+    invoke('plugin:log|log', { level: LOG_LEVEL_ERROR, message: String(message), location: 'webview' }).catch(() => {});
+  }
+
+  window.addEventListener('error', (e) => {
+    logError(`${e.message} (${e.filename}:${e.lineno}:${e.colno})${e.error?.stack ? `\n${e.error.stack}` : ''}`);
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    logError(`Unhandled rejection: ${e.reason?.stack || e.reason}`);
+  });
+
   // DevTools: F12 / Ctrl+Shift+I
   window.addEventListener('keydown', (e) => {
     const isDevtoolsCombo = e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'i');
