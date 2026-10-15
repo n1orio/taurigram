@@ -53,4 +53,7 @@ cp "$PUBLIC/apple-touch-icon.png" "$PUBLIC/apple-touch-icon-dev.png"
 rsvg-convert -w 512 -h 512 "$ICON" -o "$PUBLIC/icon-electron-macos.png"
 rsvg-convert -w 150 -h 150 "$ICON" -o "$PUBLIC/mstile-150x150.png"
 
+# Анимированная заставка при запуске
+python3 "$ROOT/scripts/generate-splash.py" "$GLYPH" "$ROOT/client/src/assets/tgs/loading.tgs"
+
 echo "Иконки обновлены. Знак в топбаре окна — client/tauri/web/loader.js (.ethernet-titlebar-logo), берётся из $GLYPH вручную."

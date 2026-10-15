@@ -1,6 +1,6 @@
 [package]
 name = "taurigram"
-version = "1.0.0"
+version = "1.0.1"
 description = "Taurigram — Telegram client"
 repository = "https://github.com/n1orio/taurigram"
 authors = ["taurigram"]
