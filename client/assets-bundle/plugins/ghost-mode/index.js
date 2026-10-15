@@ -9,6 +9,8 @@
  * - Ctrl+Shift+G — вкл/выкл, Alt+R — прочитать открытый чат вручную.
  *
  * Работает поверх `window.ethernet.api.beforeRequest`, настройки — в localStorage.
+ * Главный переключатель общий со встроенным режимом призрака клиента (`window.taurigramGhost`):
+ * 👻 включает и выключает оба сразу.
  */
 
 (function () {
@@ -71,8 +73,28 @@
     renderButton();
   }
 
+  function getCurrentUserId() {
+    return store?.getGlobal?.()?.currentUserId;
+  }
+
+  // Встроенный режим клиента появляется после загрузки приложения, поэтому берём его лениво
+  function getBuiltinGhost() {
+    return window.taurigramGhost;
+  }
+
+  function isGhostEnabled() {
+    const builtin = getBuiltinGhost();
+    return builtin ? builtin.isEnabled(getCurrentUserId()) : settings.enabled;
+  }
+
+  function setGhostEnabled(isEnabled) {
+    settings.enabled = isEnabled;
+    getBuiltinGhost()?.setEnabled(isEnabled, getCurrentUserId());
+    saveSettings();
+  }
+
   function isActive(option) {
-    return settings.enabled && settings[option];
+    return isGhostEnabled() && settings[option];
   }
 
   function notify(message) {
@@ -161,10 +183,10 @@
   });
 
   function toggleEnabled() {
-    settings.enabled = !settings.enabled;
-    saveSettings();
-    notify(settings.enabled ? '👻 Режим призрака включён' : 'Режим призрака выключен');
-    if (!settings.enabled) clearTimeout(offlineTimer);
+    const isEnabled = !isGhostEnabled();
+    setGhostEnabled(isEnabled);
+    notify(isEnabled ? '👻 Режим призрака включён' : 'Режим призрака выключен');
+    if (!isEnabled) clearTimeout(offlineTimer);
   }
 
   // --- Интерфейс ---
@@ -247,8 +269,9 @@
   function renderButton() {
     const button = document.getElementById(BUTTON_ID);
     if (!button) return;
-    button.classList.toggle('is-active', settings.enabled);
-    button.title = settings.enabled
+    const isEnabled = isGhostEnabled();
+    button.classList.toggle('is-active', isEnabled);
+    button.title = isEnabled
       ? 'Режим призрака включён (клик — выключить, правый клик — настройки)'
       : 'Режим призрака выключен (клик — включить, правый клик — настройки)';
   }
@@ -267,6 +290,16 @@
     });
     header.appendChild(button);
     renderButton();
+    subscribeToBuiltin();
+  }
+
+  // Переключение режима в настройках клиента сразу отражается на кнопке
+  let isSubscribedToBuiltin = false;
+  function subscribeToBuiltin() {
+    const builtin = getBuiltinGhost();
+    if (isSubscribedToBuiltin || !builtin?.subscribe) return;
+    isSubscribedToBuiltin = true;
+    builtin.subscribe(renderButton);
   }
 
   function openPanel() {
@@ -281,7 +314,7 @@
     card.className = 'ghost-card';
     card.innerHTML = '<div class="ghost-title">👻 Режим призрака</div>';
 
-    card.appendChild(createRow('enabled', 'Включить режим призрака', 'Главный переключатель', true));
+    card.appendChild(createRow('enabled', 'Включить режим призрака', 'Общий со встроенным режимом в настройках', true));
     OPTIONS.forEach(([key, label, hint]) => card.appendChild(createRow(key, label, hint)));
 
     const actions = document.createElement('div');
@@ -304,7 +337,7 @@
 
   function createRow(key, label, hint, isMain) {
     const row = document.createElement('label');
-    row.className = `ghost-row${isMain ? ' is-main' : ''}${!isMain && !settings.enabled ? ' is-disabled' : ''}`;
+    row.className = `ghost-row${isMain ? ' is-main' : ''}${!isMain && !isGhostEnabled() ? ' is-disabled' : ''}`;
     const text = document.createElement('div');
     text.className = 'ghost-text';
     const labelEl = document.createElement('div');
@@ -317,11 +350,15 @@
 
     const input = document.createElement('input');
     input.type = 'checkbox';
-    input.checked = Boolean(settings[key]);
+    input.checked = isMain ? isGhostEnabled() : Boolean(settings[key]);
     input.addEventListener('change', () => {
+      if (isMain) {
+        setGhostEnabled(input.checked);
+        openPanel();
+        return;
+      }
       settings[key] = input.checked;
       saveSettings();
-      if (isMain) openPanel();
     });
     row.append(text, input);
     return row;
@@ -348,5 +385,5 @@
   }).observe(document.documentElement, { childList: true, subtree: true });
   ensureButton();
 
-  log(`[${PLUGIN_ID}] загружен, режим призрака ${settings.enabled ? 'включён' : 'выключен'}`);
+  log(`[${PLUGIN_ID}] загружен`);
 })();

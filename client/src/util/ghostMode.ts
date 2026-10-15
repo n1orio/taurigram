@@ -270,3 +270,26 @@ export function unmarkLocallyDeletedMessage(id: number) {
   // Retain the mark within the 2-minute window to handle duplicate MTProto updates
 }
 
+
+function setGhostEnabled(isEnabled: boolean, userId?: string) {
+  const storage = getGhostStorage();
+  const accountSettings = userId ? storage.accounts?.[userId] : undefined;
+  if (accountSettings) {
+    saveGhostStorage({
+      ...storage,
+      accounts: { ...storage.accounts, [userId!]: { ...accountSettings, enabled: isEnabled } },
+    });
+    return;
+  }
+
+  saveGhostStorage({ ...storage, global: { ...storage.global, enabled: isEnabled } });
+}
+
+// Master switch for plugins, e.g. the 👻 button of the Ghost Mode plugin
+if (typeof window !== 'undefined') {
+  (window as any).taurigramGhost = {
+    isEnabled: (userId?: string) => getEffectiveGhostSettings(userId).enabled,
+    setEnabled: setGhostEnabled,
+    subscribe: subscribeGhostStorage,
+  };
+}
