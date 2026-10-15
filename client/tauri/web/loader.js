@@ -3136,10 +3136,10 @@
     titlebar.innerHTML = `
       <div class="ethernet-titlebar-left">
         <div class="ethernet-titlebar-logo" title="Taurigram">
-          <svg viewBox="232 176 572 660" width="18" height="18" style="display:block;">
-            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="108">
-              <path d="M292 344 H732"/>
-              <path d="M512 236 V636 C512 718 562 770 642 770 C 686 770 718 754 744 730"/>
+          <svg viewBox="64 76 900 824" width="20" height="20" style="display:block;">
+            <g fill="currentColor">
+              <path d="M410 120 C 410 80 610 80 610 120 L610 620 C610 690 650 724 714 724 C 760 724 800 708 834 682 C 868 656 912 684 900 726 C 872 832 774 896 664 896 C 506 896 410 806 410 650 Z"/>
+              <path d="M90 600 C 214 372 520 262 924 256 C 966 256 976 322 936 336 C 720 392 482 436 300 540 C 228 582 168 628 132 654 C 92 682 66 640 90 600 Z"/>
             </g>
           </svg>
         </div>
