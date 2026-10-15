@@ -17,7 +17,10 @@ else
     echo "В последнем релизе нет .deb — соберите его сами и передайте путь: ./build.sh path/to/app.deb" >&2
     exit 1
   fi
-  curl -fL "$url" -o taurigram.deb
+  # Недокачанный файл хранится под именем версии, повторный запуск продолжает загрузку
+  part="$(basename "$url").part"
+  curl -fL --retry 5 --retry-all-errors -C - "$url" -o "$part"
+  mv "$part" taurigram.deb
 fi
 
 if [[ ! -d shared-modules ]]; then

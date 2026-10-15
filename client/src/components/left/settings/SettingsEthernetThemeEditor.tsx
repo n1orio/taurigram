@@ -48,21 +48,21 @@ const ANIMATION_PRESETS: { label: string; duration: number; curve: string }[] = 
 ];
 
 export const ETH_DEFAULT_COLORS: Record<string, string> = {
-  '--color-background': '#16171a',
-  '--color-background-secondary': '#212328',
-  '--color-background-secondary-accent': '#292c33',
-  '--color-background-sidebar': '#1a1b1f',
-  '--color-background-selected': '#2a2e37',
-  '--color-borders': '#2a2d34',
-  '--color-dividers': '#24272e',
-  '--color-text': '#f3f4f6',
-  '--color-links': '#58a6ff',
-  '--color-text-secondary': '#9da7b7',
-  '--color-primary': '#3b82f6',
-  '--color-icon-buttons': '#9da7b7',
-  '--color-text-meta-colored': '#58a6ff',
-  '--color-background-own': '#1e3a5f',
-  '--color-chat-active': '#2b3d58',
+  '--color-background': '#17212b',
+  '--color-background-secondary': '#1e2c3a',
+  '--color-background-secondary-accent': '#242f3d',
+  '--color-background-sidebar': '#0e1621',
+  '--color-background-selected': '#232e3c',
+  '--color-borders': '#101921',
+  '--color-dividers': '#101921',
+  '--color-text': '#f5f5f5',
+  '--color-links': '#6ab3f3',
+  '--color-text-secondary': '#708499',
+  '--color-primary': '#5288c1',
+  '--color-icon-buttons': '#708499',
+  '--color-text-meta-colored': '#6ab3f3',
+  '--color-background-own': '#2b5278',
+  '--color-chat-active': '#2b5278',
 };
 
 const DEFAULT_MOD: EthernetMod = {
@@ -481,7 +481,7 @@ const SettingsEthernetThemeEditor: FC<OwnProps> = ({ isActive, onReset }) => {
     // Считываем реальные цвета из стилей активной темы, чтобы не было пустых/серых плашек
     for (const { key } of COLOR_VARS) {
       if (!mergedColors[key]) {
-        mergedColors[key] = ETH_DEFAULT_COLORS[key] || getComputedColorHex(key, '#3b82f6');
+        mergedColors[key] = ETH_DEFAULT_COLORS[key] || getComputedColorHex(key, '#5288c1');
       }
     }
 

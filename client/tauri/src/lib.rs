@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 mod commands;
 mod deeplink;
+mod noctalia;
 mod notifications;
 mod paths;
 mod protocol;
@@ -125,6 +126,7 @@ pub fn run() {
     }
 
     tray::init(app.handle())?;
+    noctalia::start_watcher(app.handle().clone());
 
     Ok(())
   });
@@ -169,6 +171,9 @@ pub fn run() {
     commands::ethernet_notifications_disabled_set,
     commands::ethernet_close_to_tray_disabled_get,
     commands::ethernet_close_to_tray_disabled_set,
+    commands::ethernet_noctalia_sync_get,
+    commands::ethernet_noctalia_sync_set,
+    commands::ethernet_noctalia_theme_read,
     commands::ethernet_safemode_get,
     commands::ethernet_safemode_set,
     commands::ethernet_last_crashed_plugin_get,

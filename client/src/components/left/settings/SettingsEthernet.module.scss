@@ -60,9 +60,10 @@
   padding: 0.25rem 0.75rem;
   font-family: "SF Pro Display", "SF Pro", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-weight: 900 !important;
-  font-size: clamp(3.2rem, 11vw, 4.85rem);
-  line-height: 1;
-  letter-spacing: -0.04em;
+  font-size: clamp(1.5rem, 6vw, 2rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-align: center;
   color: var(--color-primary);
   transition: transform 0.18s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.18s ease;
 

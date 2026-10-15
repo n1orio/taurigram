@@ -77,6 +77,10 @@ export interface HermesDesktopApi {
   networkGeoInfo?: () => Promise<any>;
   safeModeGet?: () => Promise<boolean>;
   safeModeSet?: (enabled: boolean) => Promise<boolean>;
+  noctaliaSyncGet?: () => Promise<boolean>;
+  noctaliaSyncSet?: (enabled: boolean) => Promise<boolean>;
+  noctaliaThemeRead?: () => Promise<string | null>;
+  onNoctaliaThemeChange?: (cb: () => void) => () => void;
   lastCrashedPluginGet?: () => Promise<{ id: string; error: string; time: number } | null>;
   clearLastCrashedPlugin?: () => Promise<boolean>;
   reportPluginCrash?: (pluginId: string, error: string) => Promise<any>;
@@ -117,6 +121,7 @@ export interface HermesLoaderApi {
   applyTheme: (name: string) => Promise<void>;
   clearTheme: () => void;
   applyMod: (mod: HermesMod) => void;
+  refreshNoctalia?: () => Promise<void>;
   wallpaperSet?: (file: string | null, kind?: 'image' | 'video') => void;
   wallpaperClear?: () => void;
   api: HermesApiHooks;

@@ -20,6 +20,16 @@ const DICTIONARY: Record<string, { ru: string; en: string }> = {
   EthernetPluginsHint: { ru: 'Плагины выполняются в контексте страницы. Устанавливайте только проверенный код.', en: 'Plugins run in the page context. Only install code you trust.' },
   EthernetThemeChannel: { ru: '@ethTheme', en: '@ethTheme' },
   EthernetThemeChannelDesc: { ru: 'Канал с темами от оригинального автора (Ethernet)', en: 'Themes channel by the original author (Ethernet)' },
+  EthernetForkAuthorChannel: { ru: 'Телеграм канал создателя форка', en: 'Fork author\'s Telegram channel' },
+  EthernetNoctaliaSync: { ru: 'Синхронизация с Noctalia', en: 'Sync with Noctalia' },
+  EthernetNoctaliaSyncDesc: {
+    ru: 'Цвета берутся из шаблона Telegram в Noctalia и обновляются вместе с обоями',
+    en: 'Colors come from the Noctalia Telegram template and follow your wallpaper',
+  },
+  EthernetNoctaliaSyncMissing: {
+    ru: 'Включите шаблон Telegram в Noctalia (Color Scheme → Templates)',
+    en: 'Enable the Telegram template in Noctalia (Color Scheme → Templates)',
+  },
   EthernetPluginChannel: { ru: '@ethPlugin', en: '@ethPlugin' },
   EthernetPluginChannelDesc: { ru: 'Канал с плагинами для Taurigram', en: 'Plugins channel for Taurigram' },
   EthernetSafeMode: { ru: 'Безопасный режим', en: 'Safe Mode' },

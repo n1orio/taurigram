@@ -20,10 +20,15 @@
 ## 2. Сборка и установка
 
 ```bash
-git clone https://github.com/n1orio/taurigram.git
-cd taurigram/packaging/flatpak
+git clone --depth 1 --filter=blob:none --sparse https://github.com/n1orio/taurigram.git
+cd taurigram
+git sparse-checkout set packaging/flatpak
+cd packaging/flatpak
 ./build.sh
 ```
+
+Скачивается только папка `packaging/flatpak` (скрипт и манифест, несколько КБ) —
+исходники клиента для этого не нужны: приложение берётся из готового `.deb`.
 
 Скрипт сам:
 1. скачает `.deb` из последнего релиза на GitHub;
@@ -33,7 +38,8 @@ cd taurigram/packaging/flatpak
 
 ### Из своей сборки
 
-Если релиза ещё нет или вы что-то меняли в коде, соберите `.deb` сами и передайте путь:
+Если релиза ещё нет или вы что-то меняли в коде, соберите `.deb` сами и передайте путь.
+Для этого нужен полный репозиторий (`git clone https://github.com/n1orio/taurigram.git`):
 
 ```bash
 cd taurigram/client

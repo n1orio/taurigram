@@ -271,6 +271,11 @@
     applyMod(mod) {
       applyModSettings(mod);
     },
+    // Перечитать палитру Noctalia (после переключения синхронизации) и перекрасить интерфейс
+    async refreshNoctalia() {
+      await loadNoctaliaColors();
+      applyModSettings(window.__ethernetMod);
+    },
     wallpaperSet(file, kind) {
       activeWallpaperFile = file;
       activeWallpaperKind = kind || (file && /\.(mp4|webm)$/i.test(file) ? 'video' : 'image');
@@ -311,20 +316,20 @@
       } catch {
         applyModSettings({
           colors: {
-            '--color-background': '#16171a',
-            '--color-background-secondary': '#212328',
-            '--color-background-secondary-accent': '#292c33',
-            '--color-background-sidebar': '#1a1b1f',
-            '--color-background-selected': '#2a2e37',
-            '--color-borders': '#2a2d34',
-            '--color-dividers': '#24272e',
-            '--color-text': '#f3f4f6',
-            '--color-links': '#58a6ff',
-            '--color-text-secondary': '#9da7b7',
-            '--color-primary': '#3b82f6',
-            '--color-text-meta-colored': '#58a6ff',
-            '--color-background-own': '#1e3a5f',
-            '--color-chat-active': '#2b3d58',
+            '--color-background': '#17212b',
+            '--color-background-secondary': '#1e2c3a',
+            '--color-background-secondary-accent': '#242f3d',
+            '--color-background-sidebar': '#0e1621',
+            '--color-background-selected': '#232e3c',
+            '--color-borders': '#101921',
+            '--color-dividers': '#101921',
+            '--color-text': '#f5f5f5',
+            '--color-links': '#6ab3f3',
+            '--color-text-secondary': '#708499',
+            '--color-primary': '#5288c1',
+            '--color-text-meta-colored': '#6ab3f3',
+            '--color-background-own': '#2b5278',
+            '--color-chat-active': '#2b5278',
           },
           chatWidth: 'wide',
         });
@@ -342,6 +347,7 @@
   // 3. Загрузка и немедленное применение темы и настроек мода при старте
   async function loadAndApplyAll() {
     ensureActiveWallpaper();
+    await loadNoctaliaColors();
     let themeToApply = null;
 
     try {
@@ -382,6 +388,68 @@
       } catch {}
     }
   }
+
+  // Синхронизация с Noctalia: цвета из её шаблона Telegram перекрывают цвета темы
+  const NOCTALIA_COLOR_KEYS = {
+    '--color-background': ['windowBg'],
+    '--color-background-secondary': ['sideBarBgActive', 'menuBg'],
+    '--color-background-secondary-accent': ['windowBgOver'],
+    '--color-background-sidebar': ['sideBarBg', 'windowBg'],
+    '--color-background-selected': ['windowBgOver'],
+    '--color-borders': ['windowBgOver'],
+    '--color-dividers': ['windowBgOver'],
+    '--color-text': ['windowFg'],
+    '--color-links': ['windowActiveTextFg', 'windowBgActive'],
+    '--color-text-secondary': ['windowSubTextFg'],
+    '--color-primary': ['windowBgActive'],
+    '--color-icon-buttons': ['windowSubTextFg'],
+    '--color-text-meta-colored': ['windowActiveTextFg', 'windowBgActive'],
+    '--color-background-own': ['msgOutBg'],
+    '--color-chat-active': ['dialogsBgActive', 'windowBgOver'],
+  };
+  const NOCTALIA_MAX_ALIAS_DEPTH = 8;
+  let noctaliaColors = null;
+
+  async function loadNoctaliaColors() {
+    const desktop = window.ethernetDesktop || window.hermesDesktop;
+    if (!desktop?.noctaliaSyncGet) return;
+    try {
+      const isEnabled = await desktop.noctaliaSyncGet();
+      const text = isEnabled ? await desktop.noctaliaThemeRead() : undefined;
+      noctaliaColors = text ? parseNoctaliaColors(text) : null;
+    } catch (err) {
+      console.error('[ethernet] noctalia theme read failed', err);
+      noctaliaColors = null;
+    }
+  }
+
+  // Формат `.tdesktop-theme`: строки `key: #rrggbb[aa];`, значением может быть имя другого ключа
+  function parseNoctaliaColors(text) {
+    const values = {};
+    for (const match of text.matchAll(/^\s*(\w+)\s*:\s*([^;\n]+);/gm)) {
+      values[match[1]] = match[2].trim();
+    }
+
+    function resolveColor(key) {
+      let value = values[key];
+      for (let depth = 0; value && !value.startsWith('#') && depth < NOCTALIA_MAX_ALIAS_DEPTH; depth++) {
+        value = values[value];
+      }
+      return value && /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(value) ? value.slice(0, 7) : undefined;
+    }
+
+    const colors = {};
+    for (const [cssVar, keys] of Object.entries(NOCTALIA_COLOR_KEYS)) {
+      const color = keys.map(resolveColor).find(Boolean);
+      if (color) colors[cssVar] = color;
+    }
+    return Object.keys(colors).length ? colors : null;
+  }
+
+  const desktopForNoctalia = window.ethernetDesktop || window.hermesDesktop;
+  desktopForNoctalia?.onNoctaliaThemeChange?.(() => {
+    if (noctaliaColors) api.refreshNoctalia();
+  });
 
   // 4. Загрузка активных плагинов
   function handlePluginCrash(pluginId, errorMessage) {
@@ -531,6 +599,9 @@
   function applyModSettings(mod) {
     window.__ethernetMod = mod || {};
     mod = mod || {};
+    if (noctaliaColors) {
+      mod = { ...mod, colors: { ...mod.colors, ...noctaliaColors } };
+    }
     document.documentElement.setAttribute('data-message-align-own', mod.messageAlignOwn || 'right');
     document.documentElement.setAttribute('data-message-align-other', mod.messageAlignOther || 'left');
     document.documentElement.setAttribute('data-chat-width', mod.chatWidth || 'wide');
@@ -618,21 +689,21 @@
     }
 
     const DEFAULT_ETH_COLORS = {
-      '--color-background': '#16171a',
-      '--color-background-secondary': '#212328',
-      '--color-background-secondary-accent': '#292c33',
-      '--color-background-sidebar': '#1a1b1f',
-      '--color-background-selected': '#2a2e37',
-      '--color-borders': '#2a2d34',
-      '--color-dividers': '#24272e',
-      '--color-text': '#f3f4f6',
-      '--color-links': '#58a6ff',
-      '--color-text-secondary': '#9da7b7',
-      '--color-primary': '#3b82f6',
-      '--color-icon-buttons': '#9da7b7',
-      '--color-text-meta-colored': '#58a6ff',
-      '--color-background-own': '#1e3a5f',
-      '--color-chat-active': '#2b3d58',
+      '--color-background': '#17212b',
+      '--color-background-secondary': '#1e2c3a',
+      '--color-background-secondary-accent': '#242f3d',
+      '--color-background-sidebar': '#0e1621',
+      '--color-background-selected': '#232e3c',
+      '--color-borders': '#101921',
+      '--color-dividers': '#101921',
+      '--color-text': '#f5f5f5',
+      '--color-links': '#6ab3f3',
+      '--color-text-secondary': '#708499',
+      '--color-primary': '#5288c1',
+      '--color-icon-buttons': '#708499',
+      '--color-text-meta-colored': '#6ab3f3',
+      '--color-background-own': '#2b5278',
+      '--color-chat-active': '#2b5278',
     };
 
     const colorsToApply = (hasColors && Object.keys(mod.colors).length > 0)
@@ -654,7 +725,7 @@
     }
     window.__ethernetPrevColors = { ...colorsToApply };
 
-    const primaryRaw = colorsToApply['--color-primary'] || '#3b82f6';
+    const primaryRaw = colorsToApply['--color-primary'] || '#5288c1';
     const primaryHex = primaryRaw.replace(/\s*!important/g, '').trim();
     const linksColor = colorsToApply['--color-links'];
 
@@ -1361,54 +1432,57 @@
         pointer-events: none !important;
       }
 
-      /* Интеллектуальная адаптивная ширина левой колонки: просторная в обычном режиме (до 30rem), компактная (23rem) при открытом профиле */
-      #LeftColumn,
-      #Main #LeftColumn {
-        margin: 0.5rem 0 0.5rem 0.5rem !important;
-        height: calc(100% - 1rem) !important;
-        width: var(--left-column-width, 27rem) !important;
-        min-width: 16rem !important;
-        max-width: 30rem !important;
-        box-sizing: border-box !important;
-        will-change: width, max-width !important;
-        transition: width var(--layer-transition, 300ms cubic-bezier(0.33, 1, 0.68, 1)), max-width var(--layer-transition, 300ms cubic-bezier(0.33, 1, 0.68, 1)), transform var(--layer-transition) !important;
-      }
-
-      /* В обычном состоянии (профиль закрыт): левый сайдбар шире и просторнее (по умолчанию 27rem, возможность растянуть до 30rem) */
-      #Main:not(.right-column-open) #LeftColumn,
-      #Main:not(.right-column-open) #Main #LeftColumn,
-      #Main.right-column-closing #LeftColumn,
-      #Main.right-column-closing #Main #LeftColumn {
-        width: var(--left-column-width, 27rem) !important;
-        max-width: 30rem !important;
-      }
-
-      /* При открытом профиле: левый сайдбар плавно сужается до компактных 23rem, освобождая место для чата */
+      /* На узком окне (≤ 925px) работает адаптивная раскладка клиента: выезжающая левая колонка и сдвиг чата */
       @media (min-width: 926px) {
-        #Main.right-column-open:not(.right-column-closing) #LeftColumn,
-        #Main.right-column-open:not(.right-column-closing) #Main #LeftColumn {
-          width: min(var(--left-column-width, 23rem), 23rem) !important;
-          max-width: 23rem !important;
+        /* Интеллектуальная адаптивная ширина левой колонки: просторная в обычном режиме (до 30rem), компактная (23rem) при открытом профиле */
+        #LeftColumn,
+        #Main #LeftColumn {
+          margin: 0.5rem 0 0.5rem 0.5rem !important;
+          height: calc(100% - 1rem) !important;
+          width: var(--left-column-width, 27rem) !important;
+          min-width: 16rem !important;
+          max-width: 30rem !important;
+          box-sizing: border-box !important;
+          will-change: width, max-width !important;
+          transition: width var(--layer-transition, 300ms cubic-bezier(0.33, 1, 0.68, 1)), max-width var(--layer-transition, 300ms cubic-bezier(0.33, 1, 0.68, 1)), transform var(--layer-transition) !important;
         }
-      }
 
-      body.no-page-transitions #LeftColumn,
-      body.no-right-column-animations #LeftColumn {
-        transition: none !important;
-      }
+        /* В обычном состоянии (профиль закрыт): левый сайдбар шире и просторнее (по умолчанию 27rem, возможность растянуть до 30rem) */
+        #Main:not(.right-column-open) #LeftColumn,
+        #Main:not(.right-column-open) #Main #LeftColumn,
+        #Main.right-column-closing #LeftColumn,
+        #Main.right-column-closing #Main #LeftColumn {
+          width: var(--left-column-width, 27rem) !important;
+          max-width: 30rem !important;
+        }
 
-      .ArchivedChats,
-      .ArchivedChats .left-header,
-      .ArchivedChats .chat-list-wrapper,
-      .ArchivedChats .chat-list {
-        background-color: var(--color-background) !important;
-        background: var(--color-background) !important;
-      }
+        /* При открытом профиле: левый сайдбар плавно сужается до компактных 23rem, освобождая место для чата */
+        @media (min-width: 926px) {
+          #Main.right-column-open:not(.right-column-closing) #LeftColumn,
+          #Main.right-column-open:not(.right-column-closing) #Main #LeftColumn {
+            width: min(var(--left-column-width, 23rem), 23rem) !important;
+            max-width: 23rem !important;
+          }
+        }
 
-      #FoldersSidebar,
-      #Main #FoldersSidebar {
-        margin: 0.5rem 0 0.5rem 0.5rem !important;
-        height: calc(100% - 1rem) !important;
+        body.no-page-transitions #LeftColumn,
+        body.no-right-column-animations #LeftColumn {
+          transition: none !important;
+        }
+
+        .ArchivedChats,
+        .ArchivedChats .left-header,
+        .ArchivedChats .chat-list-wrapper,
+        .ArchivedChats .chat-list {
+          background-color: var(--color-background) !important;
+          background: var(--color-background) !important;
+        }
+
+        #FoldersSidebar,
+        #Main #FoldersSidebar {
+          margin: 0.5rem 0 0.5rem 0.5rem !important;
+          height: calc(100% - 1rem) !important;
+        }
       }
 
       #MiddleColumn .MiddleHeader,
@@ -1495,34 +1569,36 @@
         --messages-container-width: 100% !important;
       }
 
-      #MiddleColumn,
-      #MiddleColumn .messages-layout,
-      #MiddleColumn .messages-layout > .Transition,
-      #MiddleColumn .messages-layout > .Transition > .Transition_slide,
-      #MiddleColumn .MessageList {
-        width: 100% !important;
-        max-width: 100% !important;
-        align-items: stretch !important;
-        transform: none !important;
-      }
+      @media (min-width: 926px) {
+        #MiddleColumn,
+        #MiddleColumn .messages-layout,
+        #MiddleColumn .messages-layout > .Transition,
+        #MiddleColumn .messages-layout > .Transition > .Transition_slide,
+        #MiddleColumn .MessageList {
+          width: 100% !important;
+          max-width: 100% !important;
+          align-items: stretch !important;
+          transform: none !important;
+        }
 
-      #MiddleColumn .MessageList,
-      #MiddleColumn .messages-layout,
-      #MiddleColumn .AudioPlayer,
-      #MiddleColumn .MiddleSearch,
-      #MiddleColumn .DropArea {
-        transform: none !important;
-      }
+        #MiddleColumn .MessageList,
+        #MiddleColumn .messages-layout,
+        #MiddleColumn .AudioPlayer,
+        #MiddleColumn .MiddleSearch,
+        #MiddleColumn .DropArea {
+          transform: none !important;
+        }
 
-      #Main.right-column-open #MiddleColumn,
-      #Main.right-column-open #MiddleColumn .messages-layout,
-      #Main.right-column-open #MiddleColumn .MessageList,
-      #Main.right-column-shown #MiddleColumn .messages-layout,
-      #Main.right-column-animating #MiddleColumn .messages-layout,
-      #Main.narrow-message-list #MiddleColumn .messages-layout,
-      #Main.narrow-message-list #MiddleColumn .MessageList {
-        width: 100% !important;
-        transform: none !important;
+        #Main.right-column-open #MiddleColumn,
+        #Main.right-column-open #MiddleColumn .messages-layout,
+        #Main.right-column-open #MiddleColumn .MessageList,
+        #Main.right-column-shown #MiddleColumn .messages-layout,
+        #Main.right-column-animating #MiddleColumn .messages-layout,
+        #Main.narrow-message-list #MiddleColumn .messages-layout,
+        #Main.narrow-message-list #MiddleColumn .MessageList {
+          width: 100% !important;
+          transform: none !important;
+        }
       }
 
       /* Идеальное полноразмерное позиционирование шапки, футера и чата на всю доступную ширину */
@@ -1685,46 +1761,48 @@
         max-width: calc(100% - 1rem) !important;
       }
 
-      /* Плавная адаптация ширины левого сайдбара при открытии профиля: 23rem в открытом состоянии, возврат к пользовательскому при закрытии */
-      #Main.right-column-open:not(.right-column-closing) #LeftColumn {
-        width: 23rem !important;
-        max-width: 23rem !important;
-      }
+      @media (min-width: 926px) {
+        /* Плавная адаптация ширины левого сайдбара при открытии профиля: 23rem в открытом состоянии, возврат к пользовательскому при закрытии */
+        #Main.right-column-open:not(.right-column-closing) #LeftColumn {
+          width: 23rem !important;
+          max-width: 23rem !important;
+        }
 
-      #Main:not(.right-column-open) #LeftColumn,
-      #Main.right-column-closing #LeftColumn {
-        width: var(--left-column-width, 27rem) !important;
-        max-width: 30rem !important;
-      }
+        #Main:not(.right-column-open) #LeftColumn,
+        #Main.right-column-closing #LeftColumn {
+          width: var(--left-column-width, 27rem) !important;
+          max-width: 30rem !important;
+        }
 
-      /* При открытии профиля: чат аппаратно сдвигается ровно посередине в свободное пространство без изменения размеров (никакого ресайза и перерисовок) */
-      #Main.right-column-open:not(.right-column-closing) #MiddleColumn .MiddleHeader,
-      #Main.right-column-open:not(.right-column-closing) #MiddleColumn .MiddleHeaderPanesIsland,
-      #Main.right-column-open:not(.right-column-closing) #MiddleColumn .middle-column-footer,
-      #Main.right-column-open:not(.right-column-closing) #MiddleColumn .MessageList .messages-container,
-      #Main.right-column-open:not(.right-column-closing) #MiddleColumn .messages-container {
-        transform: translate3d(calc(-1 * (var(--custom-right-column-width, 25.5rem) + 0.5rem) / 2), 0, 0) !important;
-      }
+        /* При открытии профиля: чат аппаратно сдвигается ровно посередине в свободное пространство без изменения размеров (никакого ресайза и перерисовок) */
+        #Main.right-column-open:not(.right-column-closing) #MiddleColumn .MiddleHeader,
+        #Main.right-column-open:not(.right-column-closing) #MiddleColumn .MiddleHeaderPanesIsland,
+        #Main.right-column-open:not(.right-column-closing) #MiddleColumn .middle-column-footer,
+        #Main.right-column-open:not(.right-column-closing) #MiddleColumn .MessageList .messages-container,
+        #Main.right-column-open:not(.right-column-closing) #MiddleColumn .messages-container {
+          transform: translate3d(calc(-1 * (var(--custom-right-column-width, 25.5rem) + 0.5rem) / 2), 0, 0) !important;
+        }
 
-      html[data-profile-position="left"] #Main.right-column-open:not(.right-column-closing) #MiddleColumn .MiddleHeader,
-      html[data-profile-position="left"] #Main.right-column-open:not(.right-column-closing) #MiddleColumn .MiddleHeaderPanesIsland,
-      html[data-profile-position="left"] #Main.right-column-open:not(.right-column-closing) #MiddleColumn .middle-column-footer,
-      html[data-profile-position="left"] #Main.right-column-open:not(.right-column-closing) #MiddleColumn .MessageList .messages-container,
-      html[data-profile-position="left"] #Main.right-column-open:not(.right-column-closing) #MiddleColumn .messages-container {
-        transform: translate3d(calc((var(--custom-right-column-width, 25.5rem) + 0.5rem) / 2), 0, 0) !important;
-      }
+        html[data-profile-position="left"] #Main.right-column-open:not(.right-column-closing) #MiddleColumn .MiddleHeader,
+        html[data-profile-position="left"] #Main.right-column-open:not(.right-column-closing) #MiddleColumn .MiddleHeaderPanesIsland,
+        html[data-profile-position="left"] #Main.right-column-open:not(.right-column-closing) #MiddleColumn .middle-column-footer,
+        html[data-profile-position="left"] #Main.right-column-open:not(.right-column-closing) #MiddleColumn .MessageList .messages-container,
+        html[data-profile-position="left"] #Main.right-column-open:not(.right-column-closing) #MiddleColumn .messages-container {
+          transform: translate3d(calc((var(--custom-right-column-width, 25.5rem) + 0.5rem) / 2), 0, 0) !important;
+        }
 
-      #Main:not(.right-column-open) #MiddleColumn .MiddleHeader,
-      #Main:not(.right-column-open) #MiddleColumn .MiddleHeaderPanesIsland,
-      #Main:not(.right-column-open) #MiddleColumn .middle-column-footer,
-      #Main:not(.right-column-open) #MiddleColumn .MessageList .messages-container,
-      #Main:not(.right-column-open) #MiddleColumn .messages-container,
-      #Main.right-column-closing #MiddleColumn .MiddleHeader,
-      #Main.right-column-closing #MiddleColumn .MiddleHeaderPanesIsland,
-      #Main.right-column-closing #MiddleColumn .middle-column-footer,
-      #Main.right-column-closing #MiddleColumn .MessageList .messages-container,
-      #Main.right-column-closing #MiddleColumn .messages-container {
-        transform: translate3d(0, 0, 0) !important;
+        #Main:not(.right-column-open) #MiddleColumn .MiddleHeader,
+        #Main:not(.right-column-open) #MiddleColumn .MiddleHeaderPanesIsland,
+        #Main:not(.right-column-open) #MiddleColumn .middle-column-footer,
+        #Main:not(.right-column-open) #MiddleColumn .MessageList .messages-container,
+        #Main:not(.right-column-open) #MiddleColumn .messages-container,
+        #Main.right-column-closing #MiddleColumn .MiddleHeader,
+        #Main.right-column-closing #MiddleColumn .MiddleHeaderPanesIsland,
+        #Main.right-column-closing #MiddleColumn .middle-column-footer,
+        #Main.right-column-closing #MiddleColumn .MessageList .messages-container,
+        #Main.right-column-closing #MiddleColumn .messages-container {
+          transform: translate3d(0, 0, 0) !important;
+        }
       }
 
       /* Защита от сброса ширины контейнера при добавлении класса narrow-message-list */
@@ -1850,13 +1928,13 @@
         background: transparent !important;
         background-color: transparent !important;
         box-shadow: none !important;
-        color: var(--color-text-secondary, #9da7b7) !important;
+        color: var(--color-text-secondary, #708499) !important;
         white-space: nowrap !important;
       }
 
       #MiddleColumn .Message .Reactions .MessageMeta *,
       #MiddleColumn .Message .MessageMeta.reactions-offset * {
-        color: var(--color-text-secondary, #9da7b7) !important;
+        color: var(--color-text-secondary, #708499) !important;
       }
 
       /* Общие стили содержимого медиа и элементов альбома */
@@ -2235,8 +2313,8 @@
       .ActionMessage [class*="textContent"],
       .ActionMessage [class*="contentBox"],
       .action-message-content {
-        background-color: var(--color-background-secondary, var(--color-background, #16171a)) !important;
-        background: var(--color-background-secondary, var(--color-background, #16171a)) !important;
+        background-color: var(--color-background-secondary, var(--color-background, #17212b)) !important;
+        background: var(--color-background-secondary, var(--color-background, #17212b)) !important;
         color: var(--color-text, #ffffff) !important;
         border-radius: var(--border-radius-messages, 12px) !important;
       }
@@ -2597,17 +2675,17 @@
       .Message:not(.own) .message-content.has-solid-background,
       .Message:not(.own) .message-content.has-background,
       .Message:not(.own) .message-content.text {
-        background-color: var(--color-background-secondary, #212328) !important;
-        background: var(--color-background-secondary, #212328) !important;
-        color: var(--color-text, #f3f4f6) !important;
+        background-color: var(--color-background-secondary, #1e2c3a) !important;
+        background: var(--color-background-secondary, #1e2c3a) !important;
+        color: var(--color-text, #f5f5f5) !important;
       }
 
       .Message.own .message-content.has-solid-background,
       .Message.own .message-content.has-background,
       .Message.own .message-content.text {
-        background-color: var(--color-background-own, #1e3a5f) !important;
-        background: var(--color-background-own, #1e3a5f) !important;
-        color: var(--color-text, #f3f4f6) !important;
+        background-color: var(--color-background-own, #2b5278) !important;
+        background: var(--color-background-own, #2b5278) !important;
+        color: var(--color-text, #f5f5f5) !important;
       }
 
       /* Четкая типографика и жирность заголовков */
@@ -2656,7 +2734,7 @@
       .ListItem .title,
       .ListItem .fullName,
       .title .fullName {
-        color: var(--color-text, #f3f4f6) !important;
+        color: var(--color-text, #f5f5f5) !important;
       }
 
       .Chat.selected .title,
@@ -2671,7 +2749,7 @@
       :root {
         --color-chat-hover: rgba(255, 255, 255, 0.08) !important;
         --color-interactive-hover: rgba(255, 255, 255, 0.08) !important;
-        --action-message-bg: var(--color-background-secondary, var(--color-background, #16171a)) !important;
+        --action-message-bg: var(--color-background-secondary, var(--color-background, #17212b)) !important;
       }
 
       .Button.round:not(:active):hover,
@@ -2691,8 +2769,8 @@
 
       .Chat.selected .ListItem-button,
       .ListItem.selected .ListItem-button {
-        --background-color: var(--color-chat-active, #2b3d58) !important;
-        background-color: var(--color-chat-active, #2b3d58) !important;
+        --background-color: var(--color-chat-active, #2b5278) !important;
+        background-color: var(--color-chat-active, #2b5278) !important;
       }
 
       /* Плашки дат и сервисных сообщений: сам ActionMessage прозрачен, красится только короткая плашка внутри */
@@ -2710,9 +2788,9 @@
       .ActionMessage [class*="contentBox"],
       .message-date-group > span,
       .unread-messages-count {
-        background-color: var(--color-background-secondary, var(--color-background, #16171a)) !important;
-        background: var(--color-background-secondary, var(--color-background, #16171a)) !important;
-        color: var(--color-text, #f3f4f6) !important;
+        background-color: var(--color-background-secondary, var(--color-background, #17212b)) !important;
+        background: var(--color-background-secondary, var(--color-background, #17212b)) !important;
+        color: var(--color-text, #f5f5f5) !important;
         backdrop-filter: blur(12px) !important;
         -webkit-backdrop-filter: blur(12px) !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -2738,7 +2816,7 @@
       [class*="actionBtn"] .icon,
       [class*="actionBtn"] i.icon,
       [class*="actionBtn"] svg {
-        color: var(--color-icon-buttons, var(--color-icon-secondary, #9da7b7)) !important;
+        color: var(--color-icon-buttons, var(--color-icon-secondary, #708499)) !important;
       }
       .Button.primary .icon,
       .Button.primary i.icon,
@@ -2758,8 +2836,8 @@
       /* TabList: фон активного индикатора непрозрачный, чтобы текст базового слоя не просвечивал */
       .TabList [class*="activeIndicator"],
       [class*="TabList"] [class*="activeIndicator"] {
-        background-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-background, #16171a)) !important;
-        background: color-mix(in srgb, var(--color-primary) 24%, var(--color-background, #16171a)) !important;
+        background-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-background, #17212b)) !important;
+        background: color-mix(in srgb, var(--color-primary) 24%, var(--color-background, #17212b)) !important;
       }
 
       /* Стили кастомного тултипа Telegram */
@@ -2793,6 +2871,8 @@
 
     const style = ensureModStyle();
     style.textContent = css.join('\n');
+    // Палитра Noctalia должна перекрывать производные цвета из CSS активной темы
+    if (noctaliaColors) document.head.appendChild(style);
 
     applyWallpaper(mod);
   }
@@ -3001,21 +3081,23 @@
           padding: 0 !important;
         }
 
-        /* Симметричные отступы интерфейса: ровно 0.5rem (8px) со всех 4 сторон */
-        #LeftColumn,
-        #Main #LeftColumn {
-          margin-top: 0.5rem !important;
-          margin-bottom: 0.5rem !important;
-          margin-left: 0.5rem !important;
-          height: calc(100% - 1rem) !important;
-        }
+        @media (min-width: 926px) {
+          /* Симметричные отступы интерфейса: ровно 0.5rem (8px) со всех 4 сторон */
+          #LeftColumn,
+          #Main #LeftColumn {
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+            margin-left: 0.5rem !important;
+            height: calc(100% - 1rem) !important;
+          }
 
-        #FoldersSidebar,
-        #Main #FoldersSidebar {
-          margin-top: 0.5rem !important;
-          margin-bottom: 0.5rem !important;
-          margin-left: 0.5rem !important;
-          height: calc(100% - 1rem) !important;
+          #FoldersSidebar,
+          #Main #FoldersSidebar {
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+            margin-left: 0.5rem !important;
+            height: calc(100% - 1rem) !important;
+          }
         }
 
         #Main #RightColumn-wrapper #RightColumn,

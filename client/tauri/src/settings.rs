@@ -136,21 +136,21 @@ pub fn get_mod(theme: Option<&str>) -> Value {
   }
   json!({
     "colors": {
-      "--color-background": "#16171a",
-      "--color-background-secondary": "#212328",
-      "--color-background-secondary-accent": "#292c33",
-      "--color-background-sidebar": "#1a1b1f",
-      "--color-background-selected": "#2a2e37",
-      "--color-borders": "#2a2d34",
-      "--color-dividers": "#24272e",
-      "--color-text": "#f3f4f6",
-      "--color-links": "#58a6ff",
-      "--color-text-secondary": "#9da7b7",
-      "--color-primary": "#3b82f6",
-      "--color-icon-buttons": "#9da7b7",
-      "--color-text-meta-colored": "#58a6ff",
-      "--color-background-own": "#1e3a5f",
-      "--color-chat-active": "#2b3d58"
+      "--color-background": "#17212b",
+      "--color-background-secondary": "#1e2c3a",
+      "--color-background-secondary-accent": "#242f3d",
+      "--color-background-sidebar": "#0e1621",
+      "--color-background-selected": "#232e3c",
+      "--color-borders": "#101921",
+      "--color-dividers": "#101921",
+      "--color-text": "#f5f5f5",
+      "--color-links": "#6ab3f3",
+      "--color-text-secondary": "#708499",
+      "--color-primary": "#5288c1",
+      "--color-icon-buttons": "#708499",
+      "--color-text-meta-colored": "#6ab3f3",
+      "--color-background-own": "#2b5278",
+      "--color-chat-active": "#2b5278"
     },
     "radii": { "ui": 16, "messages": 16, "buttons": 12, "avatars": 50 }
   })
@@ -363,6 +363,14 @@ pub fn get_notifications_disabled() -> bool {
 
 pub fn set_notifications_disabled(disabled: bool) -> bool {
   set_flag("disableAllNotifications", disabled)
+}
+
+pub fn get_noctalia_sync() -> bool {
+  get_flag("noctaliaSync")
+}
+
+pub fn set_noctalia_sync(enabled: bool) -> bool {
+  set_flag("noctaliaSync", enabled)
 }
 
 pub fn get_close_to_tray_disabled() -> bool {

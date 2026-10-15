@@ -113,6 +113,11 @@
     exportTdata: (session) => invoke('ethernet_export_tdata', { session }),
     // Счётчик непрочитанных для панели задач / трея
     setUnreadCount: (count) => invoke('ethernet_set_unread_count', { count: Number(count) || 0 }),
+    // Синхронизация цветов с Noctalia
+    noctaliaSyncGet: () => invoke('ethernet_noctalia_sync_get'),
+    noctaliaSyncSet: (enabled) => invoke('ethernet_noctalia_sync_set', { enabled: Boolean(enabled) }),
+    noctaliaThemeRead: () => invoke('ethernet_noctalia_theme_read'),
+    onNoctaliaThemeChange: (cb) => listen('ethernet:noctalia-theme-changed', () => cb()),
   };
 
   Object.freeze(desktopBridge);

@@ -16,6 +16,7 @@ import ConfirmDialog from '../../ui/ConfirmDialog';
 import Icon from '../../common/icons/Icon';
 import ListItem from '../../ui/ListItem';
 import Loading from '../../ui/Loading';
+import Switcher from '../../ui/Switcher';
 import PromptDialog from '../../modals/prompt/PromptDialog';
 import DocumentationModal from './DocumentationModal';
 import ThemeCssEditorModal from './ThemeCssEditorModal';
@@ -49,6 +50,9 @@ const SettingsEthernetThemes: FC<OwnProps> = ({ isActive, onReset }) => {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
   const [newThemeName, setNewThemeName] = useState('');
+  const [isNoctaliaSync, setIsNoctaliaSync] = useState(false);
+  const [hasNoctaliaTheme, setHasNoctaliaTheme] = useState(false);
+  const canSyncNoctalia = Boolean(window.ethernetDesktop?.noctaliaSyncGet);
 
   const loadThemes = useLastCallback(async () => {
     const api = window.ethernetDesktop || window.hermesDesktop;
@@ -56,9 +60,25 @@ const SettingsEthernetThemes: FC<OwnProps> = ({ isActive, onReset }) => {
     setThemes(list || []);
   });
 
+  const loadNoctaliaState = useLastCallback(async () => {
+    const api = window.ethernetDesktop;
+    if (!api?.noctaliaSyncGet) return;
+    setIsNoctaliaSync(await api.noctaliaSyncGet());
+    setHasNoctaliaTheme(Boolean(await api.noctaliaThemeRead!()));
+  });
+
   useEffect(() => {
     loadThemes();
-  }, [loadThemes]);
+    loadNoctaliaState();
+  }, [loadThemes, loadNoctaliaState]);
+
+  const handleToggleNoctaliaSync = useLastCallback(async () => {
+    const next = !isNoctaliaSync;
+    setIsNoctaliaSync(next);
+    await window.ethernetDesktop!.noctaliaSyncSet!(next);
+    await window.ethernet?.refreshNoctalia?.();
+    await loadNoctaliaState();
+  });
 
   const handleSaveCurrentTheme = useLastCallback(async (name: string) => {
     const api = window.ethernetDesktop || window.hermesDesktop;
@@ -220,6 +240,28 @@ const SettingsEthernetThemes: FC<OwnProps> = ({ isActive, onReset }) => {
               <span className="title">{getEthernetString(lang, 'EthernetThemeEditor')}</span>
               <span className="subtitle">{getEthernetString(lang, 'EthernetThemeEditorDesc')}</span>
             </ListItem>
+            {canSyncNoctalia && (
+              <ListItem
+                icon="colorize"
+                multiline
+                narrow
+                onClick={handleToggleNoctaliaSync}
+                rightElement={(
+                  <Switcher
+                    label={getEthernetString(lang, 'EthernetNoctaliaSync')}
+                    checked={isNoctaliaSync}
+                    inactive
+                  />
+                )}
+              >
+                <span className="title">{getEthernetString(lang, 'EthernetNoctaliaSync')}</span>
+                <span className="subtitle">
+                  {getEthernetString(lang, isNoctaliaSync && !hasNoctaliaTheme
+                    ? 'EthernetNoctaliaSyncMissing'
+                    : 'EthernetNoctaliaSyncDesc')}
+                </span>
+              </ListItem>
+            )}
           </Island>
 
           {/* Панель иконок-действий и список тем */}

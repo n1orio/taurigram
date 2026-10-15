@@ -14,7 +14,7 @@ use tauri::{AppHandle, WebviewWindow};
 use tauri_plugin_dialog::DialogExt;
 
 use crate::protocol::{base_name, is_video, list_plugin_dirs, read_json, sorted_files};
-use crate::{notifications, paths, proxy, settings, tray};
+use crate::{noctalia, notifications, paths, proxy, settings, tray};
 
 type CmdResult<T = Value> = Result<T, String>;
 
@@ -566,6 +566,23 @@ pub fn ethernet_close_to_tray_disabled_get() -> bool {
 #[tauri::command]
 pub fn ethernet_close_to_tray_disabled_set(disabled: bool) -> bool {
   settings::set_close_to_tray_disabled(disabled)
+}
+
+// --- Синхронизация цветов с Noctalia ---
+
+#[tauri::command]
+pub fn ethernet_noctalia_sync_get() -> bool {
+  settings::get_noctalia_sync()
+}
+
+#[tauri::command]
+pub fn ethernet_noctalia_sync_set(enabled: bool) -> bool {
+  settings::set_noctalia_sync(enabled)
+}
+
+#[tauri::command]
+pub fn ethernet_noctalia_theme_read() -> Option<String> {
+  noctalia::read()
 }
 
 // --- Безопасный режим (Safe Mode) ---

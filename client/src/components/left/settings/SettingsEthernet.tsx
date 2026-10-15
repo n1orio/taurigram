@@ -143,7 +143,7 @@ const SettingsEthernet: FC<OwnProps> = ({ isActive, onReset }) => {
           onClick={openEthernetChannel}
           title="@niori0"
         >
-          taurigram
+          {getEthernetString(lang, 'EthernetForkAuthorChannel')}
         </button>
       </div>
 
