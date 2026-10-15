@@ -1,5 +1,43 @@
 # Ethernet Telegram Client — архитектура
 
+## Десктопная оболочка: Tauri 2
+
+С октября 2026 клиент работает на **Tauri** (Rust + системный WebView: WebView2 на
+Windows, WebKitGTK на Linux) вместо Electron. Код оболочки — `client/tauri/`.
+
+| Electron (было)                         | Tauri (стало)                                   |
+|-----------------------------------------|-------------------------------------------------|
+| `main.cjs`, протокол `app://telegram/`  | `src/lib.rs`, `src/protocol.rs`, `app://localhost/` (Windows: `http://app.localhost/`) |
+| `preload.cjs` → `window.ethernetDesktop` | `web/bridge.js` (init-скрипт) → те же методы через `invoke` |
+| `hermes-fs.cjs`, `ethernet-settings.cjs` | `src/commands.rs`, `src/settings.rs`            |
+| `proxy-engine.cjs` (`session.setProxy`) | `src/proxy.rs`: локальный SOCKS5-релей, через который идёт весь трафик WebView; прокси с логином/паролем, переключение без перезапуска |
+| `notification-manager.cjs` + html       | `src/notifications.rs` + `web/notifications.html` |
+| HTML-меню трея                          | нативное меню трея (`src/tray/`)                |
+| `loader.js`                             | `web/loader.js` (без изменений по API)          |
+
+Перетаскивание окна за топбар лоадера, F12/Ctrl+Shift+I (DevTools) и
+двойной клик для разворачивания обрабатывает `web/bridge.js`.
+
+Данные пользователя (`themes/`, `plugins/`, `wallpapers/`, `ethernet-settings.json`)
+лежат: в dev-сборке — в корне репозитория; в portable/AppImage — рядом с файлом
+программы; в установленной версии — в каталоге данных приложения. Переопределение —
+переменная `ETHERNET_ROOT`.
+
+Сессия Telegram хранится в IndexedDB WebView, поэтому после перехода с Electron
+нужно войти заново.
+
+Запуск:
+```
+cd client
+npm run app:build   # сборка веб-клиента в dist/
+npm run app         # tauri dev
+npm run dist:win    # / dist:linux — релизные сборки
+```
+
+---
+
+## История (Electron-версия)
+
 Дата: 2026-08-25. Статус: **MVP работает** (окно + вход + темы + плагины).
 
 ## Что уже работает (проверено реальными запусками)

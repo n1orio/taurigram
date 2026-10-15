@@ -1,5 +1,5 @@
 // Ethernet Client — браузерный лоадер тем и плагинов.
-// Инжектится в страницу через Electron-протокол (/ethernet/loader.js).
+// Инжектится в страницу через Tauri-протокол app:// (/ethernet/loader.js).
 
 (function () {
   if (window.__ethernetLoader) return;

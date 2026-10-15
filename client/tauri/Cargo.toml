@@ -1,12 +1,12 @@
- [package]
-name = "telegram_air"
-version = "2.11.5"
-description = "Telegram Air"
-authors = ["Alexander Zinchuk"]
-license = "GPLv3"
-repository = "https://github.com/Ajaxy/telegram-tt"
+[package]
+name = "ethernet"
+version = "12.0.41"
+description = "Ethernet Telegram Client"
+authors = ["ethernet"]
+license = "GPL-3.0-or-later"
+repository = "https://github.com/imsosha/ethernet"
 edition = "2024"
-rust-version = "1.97"
+rust-version = "1.88"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,15 +16,15 @@ tauri-build = { version = "2.6.3", features = [] }
 [dependencies]
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
-tauri = { version = "2.11.5", features = [ "devtools", "unstable", "config-json5", "tray-icon", "image-png"] }
+tauri = { version = "2.11.5", features = [ "devtools", "unstable", "config-json5", "tray-icon", "image-png", "image-ico"] }
 tauri-plugin-window-state = "2.4.1"
 tauri-plugin-shell = "2.3.5"
 tauri-plugin-log = "2.9.0"
 tauri-plugin-notification = "2.3.3"
 tauri-plugin-updater = "2.10.1"
 tauri-plugin-process = "2.3.1"
-tauri-plugin-fs = "2.5.1"
 tauri-plugin-deep-link = "2.4.9"
+tauri-plugin-dialog = "2.7.2"
 log = "0.4.33"
 uuid = { version = "1.24.0", features = ["v4"] }
 url = "2.5.8"
@@ -32,14 +32,13 @@ image      = "0.25.10"
 imageproc  = "0.27.0"
 ab_glyph   = "0.2.32"
 tauri-plugin-os = "2.3.2"
+tokio = { version = "1", features = ["net", "io-util", "time", "sync", "macros", "rt"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "socks", "rustls-tls"] }
+base64 = "0.22"
+regex = "1"
 
 [target."cfg(any(target_os = \"macos\", windows, target_os = \"linux\"))".dependencies]
 tauri-plugin-single-instance = { version = "2.4.3", features = ["deep-link"] }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-cocoa = "0.26.1"
-objc = "0.2.7"
-rand = "0.10.2"
 
 [lib]
 name = "app_lib"

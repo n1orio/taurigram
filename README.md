@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <b>Modern, aesthetic, and customizable Telegram desktop client powered by Web Z & Electron.</b>
+  <b>Modern, aesthetic, and customizable Telegram desktop client powered by Web Z & Tauri.</b>
 </p>
 
 <p align="center">
@@ -44,29 +44,28 @@
 ## 🚀 Getting Started
 
 ### Prerequisites
-- **Node.js**: `>= 24.11` or `>= 26.x`
-- **npm**: `>= 11.x`
+- **Node.js**: `>= 24.11` or `>= 26.x`, **npm**: `>= 11.x`
+- **Rust**: `>= 1.88` ([rustup](https://rustup.rs))
+- **Linux**: `webkit2gtk-4.1` and the other [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/#linux)
+- **Windows**: WebView2 (preinstalled on Windows 10/11) and MSVC Build Tools
 
 ### Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/ethernet.git
+git clone https://github.com/imsosha/ethernet.git
 cd ethernet/client
 ```
 
-2. Install dependencies:
+2. Install dependencies and set API keys:
 ```bash
-npm install
+npm install --allow-git=all
+cp .env.example .env   # fill in TELEGRAM_API_ID and TELEGRAM_API_HASH
 ```
 
-3. Run in development mode (Vite):
+3. Build the web bundle and run the desktop app:
 ```bash
-npm run dev
-```
-
-4. Run desktop application in Electron:
-```bash
+npm run app:build
 npm run app
 ```
 
@@ -74,20 +73,12 @@ npm run app
 
 ## 📦 Building Releases
 
-### Windows Portable (.exe)
 ```bash
 cd client
-npm run app:build
-npm run dist:win64
+npm run dist:win     # Windows installer (NSIS)
+npm run dist:linux   # Linux .deb + AppImage
 ```
-The output executable will be created in `release/Ethernet-Windows-x64.exe`.
-
-### Linux (AppImage / tar.gz / deb)
-```bash
-cd client
-npm run app:build
-npm run dist:linux
-```
+Artifacts are written to `client/tauri/target/release/bundle/`.
 
 ---
 

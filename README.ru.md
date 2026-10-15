@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <b>Современный, эстетичный и функциональный Telegram-клиент на базе Web Z и Electron с поддержкой тем, плагинов и режима невидимки.</b>
+  <b>Современный, эстетичный и функциональный Telegram-клиент на базе Web Z и Tauri с поддержкой тем, плагинов и режима невидимки.</b>
 </p>
 
 <p align="center">
@@ -60,8 +60,10 @@
 ### Сборка из исходников
 
 #### Требования
-- **Node.js**: `>= 24.11` или `>= 26.x`
-- **npm**: `>= 11.x`
+- **Node.js**: `>= 24.11` или `>= 26.x`, **npm**: `>= 11.x`
+- **Rust**: `>= 1.88` ([rustup](https://rustup.rs))
+- **Linux**: `webkit2gtk-4.1`, `libayatana-appindicator` и прочие [зависимости Tauri](https://v2.tauri.app/start/prerequisites/#linux)
+- **Windows**: WebView2 (есть в Windows 10/11) и MSVC Build Tools
 
 #### 1. Клонирование репозитория
 ```bash
@@ -69,31 +71,30 @@ git clone https://github.com/imsosha/ethernet.git
 cd ethernet/client
 ```
 
-#### 2. Установка зависимостей
+#### 2. Установка зависимостей и ключей
 ```bash
-npm install
+npm install --allow-git=all
+cp .env.example .env   # впишите TELEGRAM_API_ID и TELEGRAM_API_HASH
 ```
 
 #### 3. Запуск в режиме разработки
 ```bash
-# Запуск Vite dev-сервера
-npm run dev
+# Сборка веб-бандла (dist/)
+npm run app:build
 
-# Запуск Electron
+# Запуск Tauri-приложения
 npm run app
 ```
 
 #### 4. Компиляция релизных версий
 ```bash
-# Сборка веб-бандла
-npm run app:build
+# Установщик Windows (NSIS)
+npm run dist:win
 
-# Сборка Windows Portable (.exe)
-npm run dist:win64
-
-# Сборка Linux Portable (распакованная папка и tar.gz)
+# Linux (.deb и AppImage)
 npm run dist:linux
 ```
+Артефакты появятся в `client/tauri/target/release/bundle/`.
 
 ---
 
@@ -101,11 +102,13 @@ npm run dist:linux
 
 ```
 ethernet/
-├── client/                     # Исходный код веб-клиента и Electron-слоя
-│   ├── electron/               # Главный процесс Electron, прокси, лоадер
-│   │   ├── main.cjs            # Инициализация окна, трея и меню
-│   │   ├── proxy-engine.cjs    # Встроенный прокси-клиент SOCKS5/HTTPS
-│   │   └── notification-manager.cjs # Менеджер уведомлений
+├── client/                     # Исходный код веб-клиента и Tauri-оболочки
+│   ├── tauri/                  # Нативная часть (Rust)
+│   │   ├── src/lib.rs          # Окна, трей, команды
+│   │   ├── src/protocol.rs     # Протокол app:// (dist + /ethernet/*)
+│   │   ├── src/proxy.rs        # Встроенный прокси (SOCKS5/HTTP)
+│   │   ├── src/notifications.rs # Всплывающие уведомления
+│   │   └── web/                # Лоадер тем/плагинов и JS-мост ethernetDesktop
 │   ├── src/                    # UI-компоненты (Teact / React-парадигма)
 │   └── package.json            # Скрипты сборки и зависимости
 ├── themes/                     # Каталог пользовательских тем оформления (.css)

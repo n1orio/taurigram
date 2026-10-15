@@ -9,22 +9,14 @@
   },
   "license": "GPL-3.0-or-later",
   "type": "module",
-  "main": "electron/main.cjs",
   "scripts": {
     "dev": "cross-env APP_ENV=development vite --mode development",
     "app:build": "cross-env APP_ENV=production vite build",
-    "dist:win": "npm run app:build && npx -y electron-builder --win --dir",
-    "dist:exe": "npm run app:build && npx -y electron-builder --win portable",
-    "dist:win64": "npx -y electron-builder --win portable --x64",
-    "dist:win32": "npx -y electron-builder --win portable --ia32",
-    "dist:win:portable": "npm run app:build && npx -y electron-builder --win portable --x64",
-    "dist:win:installer": "npm run app:build && npx -y electron-builder --win nsis --x64",
-    "dist:win:all": "npm run app:build && npx -y electron-builder --win portable nsis --x64",
-    "dist:linux": "npx -y electron-builder --linux dir --x64",
-    "dist:linux:portable": "npx -y electron-builder --linux tar.gz --x64",
-    "dist:linux:appimage": "npx -y electron-builder --linux AppImage --x64",
-    "dist:all": "npm run dist:win:all && npm run dist:linux:portable",
-    "app": "electron .",
+    "app:build:tauri": "npm run app:build && node ./dev/cleanTauriDist.js",
+    "app": "tauri dev",
+    "dist": "tauri build",
+    "dist:win": "tauri build --bundles nsis",
+    "dist:linux": "tauri build --bundles deb appimage",
     "dev:mocked": "cross-env APP_ENV=test APP_MOCKED_CLIENT=1 vite --mode development --port 1235",
     "build:dev": "vite build --mode development",
     "build:staging": "cross-env APP_ENV=staging npm run build:dev",
@@ -35,7 +27,6 @@
     "web:release:production": "npm i && npm run build:production && git add -A && git commit -a -m '[Build]' --no-verify && git push",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
     "telegraph:update_changelog": "node ./dev/telegraphChangelog.js",
     "check:ts": "tsc && eslint --cache --cache-location .cache/.eslintcache",
     "check:css": "stylelint \"**/*.{css,scss}\" --cache --cache-location .cache/.stylelintcache",
@@ -86,7 +77,6 @@
     "@typescript-eslint/parser": "^8.62.0",
     "autoprefixer": "^10.5.2",
     "cross-env": "^10.1.0",
-    "electron": "^44.0.0",
     "eslint": "^10.6.0",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-import-x": "^4.17.0",
@@ -174,120 +164,5 @@
     "@parcel/watcher@2.5.6": true,
     "ttf2woff2@8.0.1": true,
     "unrs-resolver@1.12.2": true
-  },
-  "build": {
-    "appId": "org.ethernet.client",
-    "productName": "Ethernet",
-    "copyright": "Copyright © 2026 ethernet",
-    "directories": {
-      "output": "../release"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*",
-      "assets-bundle/**/*",
-      "package.json",
-      "ethernet.ico"
-    ],
-    "extraResources": [
-      {
-        "from": "bin",
-        "to": "bin",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
-    "extraFiles": [
-      {
-        "from": "assets-bundle/themes",
-        "to": "themes",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "assets-bundle/wallpapers",
-        "to": "wallpapers",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "assets-bundle/plugins",
-        "to": "plugins",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "assets-bundle/ethernet-settings.json",
-        "to": "ethernet-settings.json"
-      }
-    ],
-    "win": {
-      "icon": "ethernet.ico",
-      "legalTrademarks": "ethernet"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Ethernet",
-      "artifactName": "Ethernet-Windows-Setup-${arch}.exe"
-    },
-    "portable": {
-      "artifactName": "Ethernet-Windows-Portable-${arch}.exe"
-    },
-    "linux": {
-      "executableName": "Ethernet",
-      "target": [
-        "tar.gz",
-        "dir"
-      ],
-      "category": "Network;Chat;InstantMessaging;",
-      "icon": "public/icon-512x512.png",
-      "extraFiles": [
-        {
-          "from": "build/linux-extra",
-          "to": ".",
-          "filter": [
-            "*"
-          ]
-        },
-        {
-          "from": "assets-bundle/themes",
-          "to": "themes",
-          "filter": [
-            "**/*"
-          ]
-        },
-        {
-          "from": "assets-bundle/wallpapers",
-          "to": "wallpapers",
-          "filter": [
-            "**/*"
-          ]
-        },
-        {
-          "from": "assets-bundle/plugins",
-          "to": "plugins",
-          "filter": [
-            "**/*"
-          ]
-        },
-        {
-          "from": "assets-bundle/ethernet-settings.json",
-          "to": "ethernet-settings.json"
-        }
-      ]
-    },
-    "appImage": {
-      "artifactName": "Ethernet-Linux-${arch}.AppImage"
-    },
-    "deb": {
-      "artifactName": "Ethernet-Linux-${arch}.deb"
-    }
   }
 }

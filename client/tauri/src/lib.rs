@@ -1,178 +1,117 @@
 use std::collections::HashMap;
-use std::sync::{LazyLock, Mutex};
+use std::sync::{LazyLock, Mutex, OnceLock};
 
 use serde_json::json;
-use tauri::{Emitter, LogicalPosition, Manager, webview::DownloadEvent};
+use tauri::webview::{DownloadEvent, NewWindowResponse};
+use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder, window::Color};
 use url::Url;
 use uuid::Uuid;
 
+mod commands;
 mod deeplink;
+mod notifications;
+mod paths;
+mod protocol;
+mod proxy;
+mod settings;
+mod tray;
+
 use deeplink::Deeplink;
 
-mod tray;
-mod window;
-use crate::window::{WINDOW_STATES, WindowState};
+pub const MAIN_WINDOW_LABEL: &str = "main";
+pub const DEFAULT_WINDOW_TITLE: &str = "ethernet";
 
-#[cfg(target_os = "macos")]
-mod mac;
+pub const WINDOW_WIDTH: f64 = 1280.0;
+pub const WINDOW_HEIGHT: f64 = 832.0;
+pub const WINDOW_MIN_WIDTH: f64 = 480.0;
+pub const WINDOW_MIN_HEIGHT: f64 = 400.0;
 
-#[derive(Debug)]
-pub struct AppStateStruct {
-  pub notification_count: i32,
-  pub is_muted: bool,
-}
+// Аргументы WebView2 должны совпадать у всех окон (общее окружение WebView2)
+const BROWSER_ARGS: &str =
+  "--autoplay-policy=no-user-gesture-required --disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection";
 
-impl Default for AppStateStruct {
-  fn default() -> Self {
-    Self {
-      notification_count: 0,
-      is_muted: false,
-    }
-  }
-}
+const ALLOWED_EXTERNAL_SCHEMES: [&str; 4] = ["http", "https", "tg", "mailto"];
 
-pub type AppState = Mutex<AppStateStruct>;
-
-pub const TRAFFIC_LIGHT_POSITION_OVERLAY_LEGACY: LogicalPosition<f64> = LogicalPosition::new(26.0, 46.0);
-pub const TRAFFIC_LIGHT_POSITION_OVERLAY_26: LogicalPosition<f64> = LogicalPosition::new(26.0, 50.0);
-pub const TRAFFIC_LIGHT_POSITION_OVERLAY_MOBILE_LEGACY: LogicalPosition<f64> = LogicalPosition::new(16.0, 30.0);
-pub const TRAFFIC_LIGHT_POSITION_OVERLAY_MOBILE_26: LogicalPosition<f64> = LogicalPosition::new(16.0, 34.0);
-pub const TRAFFIC_LIGHT_POSITION_DEFAULT: LogicalPosition<f64> = LogicalPosition::new(14.0, 19.0);
-
-pub static TRAFFIC_LIGHT_POSITION_OVERLAY: LazyLock<LogicalPosition<f64>> = LazyLock::new(|| {
-  if let tauri_plugin_os::Version::Semantic(major, _, _) = tauri_plugin_os::version() {
-      if major >= 26 {
-          return TRAFFIC_LIGHT_POSITION_OVERLAY_26;
-      }
-  }
-  TRAFFIC_LIGHT_POSITION_OVERLAY_LEGACY
-});
-
-pub static TRAFFIC_LIGHT_POSITION_OVERLAY_MOBILE: LazyLock<LogicalPosition<f64>> = LazyLock::new(|| {
-  if let tauri_plugin_os::Version::Semantic(major, _, _) = tauri_plugin_os::version() {
-      if major >= 26 {
-          return TRAFFIC_LIGHT_POSITION_OVERLAY_MOBILE_26;
-      }
-  }
-  TRAFFIC_LIGHT_POSITION_OVERLAY_MOBILE_LEGACY
-});
-
-pub const WINDOW_WIDTH: f64 = 1088.0;
-pub const WINDOW_HEIGHT: f64 = 700.0;
-pub const WINDOW_MIN_WIDTH: f64 = 360.0;
-pub const WINDOW_MIN_HEIGHT: f64 = 200.0;
-
-pub static LAST_URL: LazyLock<std::sync::Mutex<String>> =
-  LazyLock::new(|| std::sync::Mutex::new(BASE_URL.to_string()));
-
-pub const DEFAULT_WINDOW_TITLE: &str = match std::option_env!("APP_TITLE") {
-  Some(title) => title,
-  None => "Telegram Air",
-};
-
-pub const BASE_URL: &str = match std::option_env!("BASE_URL") {
-  Some(url) => url,
-  None => "http://localhost:1234",
-};
+static BRIDGE_JS: &str = include_str!("../web/bridge.js");
 
 pub const WITH_UPDATER: &str = match std::option_env!("WITH_UPDATER") {
   Some(str) => str,
   None => "false",
 };
 
-pub(crate) fn strip_hash_from_url(url: &str) -> String {
-  if let Ok(mut parsed_url) = Url::parse(url) {
-    parsed_url.set_fragment(None);
-    parsed_url.to_string()
-  } else {
-    url.to_string()
-  }
-}
+static PROXY_URL: OnceLock<Url> = OnceLock::new();
 
-pub(crate) fn save_window_url(app: &tauri::AppHandle, window_label: &str) {
-  if let Some(webview_window) = app.get_webview_window(window_label) {
-    if let Ok(current_url) = webview_window.url() {
-      let url_without_hash = strip_hash_from_url(current_url.as_str());
-      if let Ok(mut last_url) = LAST_URL.lock() {
-        *last_url = url_without_hash;
-      }
-    }
-  }
-}
+// Последнее известное состояние «развёрнуто» по окнам (для события смены иконки в топбаре)
+static MAXIMIZED: LazyLock<Mutex<HashMap<String, bool>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
 pub fn run() {
   let app = tauri::Builder::default()
+    .register_asynchronous_uri_scheme_protocol(protocol::SCHEME, |_ctx, request, responder| {
+      tauri::async_runtime::spawn_blocking(move || responder.respond(protocol::handle(&request)));
+    })
     .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-      let active_windows = app.windows();
-      if active_windows.len() >= 1 {
-        let window = active_windows.values().next().unwrap();
-        window.set_focus().unwrap_or_default();
-      } else {
-        open_new_window(app.clone(), BASE_URL.to_string()).unwrap();
-      }
+      show_main_window(app);
     }))
     .plugin(tauri_plugin_os::init())
-    .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_shell::init())
+    .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_notification::init())
     .plugin(tauri_plugin_log::Builder::default().build())
-    .plugin(tauri_plugin_window_state::Builder::default().build())
+    .plugin(
+      tauri_plugin_window_state::Builder::default()
+        .with_denylist(&[notifications::LABEL])
+        .with_state_flags(tauri_plugin_window_state::StateFlags::all() & !tauri_plugin_window_state::StateFlags::VISIBLE)
+        .build(),
+    )
     .plugin(tauri_plugin_deep_link::init())
     .plugin(tauri_plugin_process::init());
 
   let app = app.on_window_event(|window, event| match event {
     tauri::WindowEvent::CloseRequested { api, .. } => {
-      let active_windows = window.app_handle().windows();
-
-      if active_windows.len() == 1 {
-        // Save current URL before hiding the last window
-        save_window_url(&window.app_handle(), window.label());
-
-        #[cfg(target_os = "macos")]
-        window.app_handle().hide().unwrap_or_default();
-        #[cfg(not(target_os = "macos"))]
-        window.hide().unwrap_or_default();
+      let label = window.label();
+      if label == notifications::LABEL {
         api.prevent_close();
-      }
-    }
-    tauri::WindowEvent::ThemeChanged(_) => {
-      #[cfg(target_os = "macos")]
-      if let Some(base_window) = window.app_handle().get_window(window.label()) {
-        if let Ok(mut states) = WINDOW_STATES.lock() {
-          if let Some(state) = states.get_mut(window.label()) {
-            let title = if state.is_overlay {
-              "".to_string()
-            } else {
-              state.title.clone()
-            };
-            let traffic_position = if state.is_overlay {
-              if state.is_mobile {
-                *TRAFFIC_LIGHT_POSITION_OVERLAY_MOBILE
-              } else {
-                *TRAFFIC_LIGHT_POSITION_OVERLAY
-              }
-            } else {
-              TRAFFIC_LIGHT_POSITION_DEFAULT
-            };
-            mac::update_window_title(base_window.clone(), title, traffic_position);
-          }
+        let _ = window.hide();
+      } else if label == MAIN_WINDOW_LABEL {
+        if settings::get_close_to_tray_disabled() {
+          window.app_handle().exit(0);
+        } else {
+          api.prevent_close();
+          let _ = window.hide();
         }
       }
     }
+    tauri::WindowEvent::Resized(_) => {
+      let Ok(is_max) = window.is_maximized() else { return };
+      let label = window.label().to_string();
+      let changed = MAXIMIZED
+        .lock()
+        .map(|mut m| m.insert(label.clone(), is_max) != Some(is_max))
+        .unwrap_or(false);
+      if changed {
+        let _ = window.emit_to(label.as_str(), "hermes:window-maximized-changed", is_max);
+      }
+    }
     tauri::WindowEvent::Destroyed => {
-      if let Ok(mut states) = WINDOW_STATES.lock() {
-        states.remove(window.label());
+      if let Ok(mut m) = MAXIMIZED.lock() {
+        m.remove(window.label());
       }
     }
     _ => {}
   });
 
   let app = app.setup(|app| {
-    // Manage app state
-    app.manage(AppState::new(AppStateStruct::default()));
+    paths::init(app.handle());
 
-    let _main_window = open_new_window(app.handle().clone(), BASE_URL.to_string())
-      .expect("Failed to open main window");
+    match proxy::start() {
+      Ok(url) => {
+        let _ = PROXY_URL.set(url);
+      }
+      Err(err) => log::error!("[ProxyEngine] failed to start relay: {err}"),
+    }
+
+    open_window(app.handle().clone(), MAIN_WINDOW_LABEL, protocol::base_url())
+      .map_err(|err| format!("Failed to open main window: {err}"))?;
 
     let deeplink = Deeplink::init();
     if let Err(err) = deeplink.setup(app.handle()) {
@@ -180,12 +119,10 @@ pub fn run() {
     }
 
     if WITH_UPDATER == "true" {
-      app
-        .handle()
-        .plugin(tauri_plugin_updater::Builder::new().build())?;
+      app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
     }
 
-    crate::tray::TrayManager::init(app.handle().clone())?;
+    tray::init(app.handle())?;
 
     Ok(())
   });
@@ -195,8 +132,51 @@ pub fn run() {
     set_notifications_count,
     set_window_title,
     open_new_window_cmd,
-    save_current_url,
-    set_menu_translations
+    commands::ethernet_themes_list,
+    commands::ethernet_theme_read,
+    commands::ethernet_theme_save,
+    commands::ethernet_theme_delete,
+    commands::ethernet_theme_activate,
+    commands::ethernet_plugins_list,
+    commands::ethernet_plugin_read,
+    commands::ethernet_plugin_save,
+    commands::ethernet_plugin_delete,
+    commands::ethernet_plugin_toggle,
+    commands::ethernet_pick_file,
+    commands::ethernet_save_file,
+    commands::ethernet_reload,
+    commands::ethernet_toggle_devtools,
+    commands::ethernet_mod_get,
+    commands::ethernet_mod_set,
+    commands::ethernet_wallpaper_set_file,
+    commands::ethernet_wallpaper_clear,
+    commands::ethernet_window_minimize,
+    commands::ethernet_window_maximize_toggle,
+    commands::ethernet_window_close,
+    commands::ethernet_window_is_maximized,
+    commands::ethernet_network_geo_info,
+    commands::ethernet_proxy_get_state,
+    commands::ethernet_proxy_save,
+    commands::ethernet_proxy_delete,
+    commands::ethernet_proxy_set_active,
+    commands::ethernet_proxy_toggle,
+    commands::ethernet_proxy_parse_link,
+    commands::ethernet_proxy_test_ping,
+    commands::ethernet_show_notification,
+    commands::ethernet_notifications_disabled_get,
+    commands::ethernet_notifications_disabled_set,
+    commands::ethernet_close_to_tray_disabled_get,
+    commands::ethernet_close_to_tray_disabled_set,
+    commands::ethernet_safemode_get,
+    commands::ethernet_safemode_set,
+    commands::ethernet_last_crashed_plugin_get,
+    commands::ethernet_clear_last_crashed_plugin,
+    commands::ethernet_report_plugin_crash,
+    commands::ethernet_set_unread_count,
+    commands::notif_ready,
+    commands::notif_clicked,
+    commands::notif_dismissed,
+    commands::notif_set_height,
   ]);
 
   app
@@ -204,215 +184,148 @@ pub fn run() {
     .expect("error while running tauri application");
 }
 
-#[tauri::command]
-#[cfg(target_os = "macos")]
-fn mark_title_bar_overlay(window: tauri::WebviewWindow, is_overlay: bool, is_mobile: Option<bool>) {
-  use crate::mac;
+/// Показывает главное окно (или создаёт его заново) и выводит на передний план
+pub(crate) fn show_main_window(app: &AppHandle) -> Option<WebviewWindow> {
+  let window = match app.get_webview_window(MAIN_WINDOW_LABEL) {
+    Some(window) => window,
+    None => open_window(app.clone(), MAIN_WINDOW_LABEL, protocol::base_url()).ok()?,
+  };
+  let _ = window.unminimize();
+  let _ = window.show();
+  let _ = window.set_focus();
+  Some(window)
+}
 
-  let mut is_mobile_val = false;
-
-  if let Ok(mut states) = WINDOW_STATES.lock() {
-    if let Some(state) = states.get_mut(window.label()) {
-      state.is_overlay = is_overlay;
-      // Only `Some` updates the stored flag; `None` keeps the previous value
-      if let Some(mobile) = is_mobile {
-        state.is_mobile = mobile;
+/// Общие настройки WebView всех окон приложения: протокол app://, прокси-релей, навигация
+pub(crate) fn app_webview_builder<'a>(app: &'a AppHandle, label: &str, url: Url) -> WebviewWindowBuilder<'a, tauri::Wry, AppHandle> {
+  let nav_app = app.clone();
+  let builder = WebviewWindowBuilder::new(app, label, WebviewUrl::CustomProtocol(url))
+    .additional_browser_args(BROWSER_ARGS)
+    .on_navigation(move |url| {
+      if protocol::is_app_url(url) {
+        return true;
       }
-      is_mobile_val = state.is_mobile;
-    }
+      open_external(&nav_app, url);
+      false
+    });
+  match PROXY_URL.get() {
+    Some(proxy_url) => builder.proxy_url(proxy_url.clone()),
+    None => builder,
   }
+}
 
-  if is_overlay {
-    let position = if is_mobile_val {
-      *TRAFFIC_LIGHT_POSITION_OVERLAY_MOBILE
-    } else {
-      *TRAFFIC_LIGHT_POSITION_OVERLAY
-    };
-
-    window
-      .set_title_bar_style(tauri::utils::TitleBarStyle::Overlay)
-      .unwrap_or_default();
-
-    if let Some(base_window) = window.app_handle().get_window(window.label()) {
-      mac::update_window_title(
-        base_window.clone(),
-        "".to_string(),
-        position,
-      );
-    }
-  } else {
-    window
-      .set_title_bar_style(tauri::utils::TitleBarStyle::Visible)
-      .unwrap_or_default();
-
-    // Determine the title we should restore.
-    let mut title_to_set = DEFAULT_WINDOW_TITLE.to_string();
-    if let Ok(states) = WINDOW_STATES.lock() {
-      if let Some(state) = states.get(window.label()) {
-        title_to_set = state.title.clone();
+fn open_window(app: AppHandle, label: &str, url: Url) -> Result<WebviewWindow, String> {
+  let popup_app = app.clone();
+  let builder = app_webview_builder(&app, label, url)
+    .title(DEFAULT_WINDOW_TITLE)
+    .inner_size(WINDOW_WIDTH, WINDOW_HEIGHT)
+    .min_inner_size(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
+    .decorations(false)
+    .background_color(Color(0, 0, 0, 255))
+    .resizable(true)
+    .disable_drag_drop_handler() // Required for Drag & Drop on Windows
+    .initialization_script(format!("window.tauri = {{ version: '{}' }};", env!("CARGO_PKG_VERSION")))
+    .initialization_script(BRIDGE_JS)
+    .on_new_window(move |url, _features| {
+      if protocol::is_app_url(&url) {
+        // Окно создаётся вне колбэка WebView, чтобы не блокировать его поток
+        let app = popup_app.clone();
+        tauri::async_runtime::spawn(async move {
+          if let Err(err) = open_window(app, &Uuid::new_v4().to_string(), url) {
+            log::error!("Failed to open app window: {err}");
+          }
+        });
+      } else {
+        open_external(&popup_app, &url);
       }
-    }
-
-    if let Some(base_window) = window.app_handle().get_window(window.label()) {
-      mac::update_window_title(
-        base_window.clone(),
-        title_to_set,
-        TRAFFIC_LIGHT_POSITION_DEFAULT,
-      );
-    }
-  }
-}
-
-#[tauri::command]
-#[cfg(not(target_os = "macos"))]
-#[allow(unused_variables)]
-fn mark_title_bar_overlay(window: tauri::WebviewWindow, is_overlay: bool, is_mobile: Option<bool>) {
-  // noop
-}
-
-#[tauri::command]
-fn set_notifications_count(
-  window: tauri::WebviewWindow,
-  amount: i32,
-  is_muted: bool,
-  state: tauri::State<'_, AppState>,
-) {
-  // Update app state
-  if let Ok(mut app_state) = state.lock() {
-    app_state.notification_count = amount;
-    app_state.is_muted = is_muted;
-  }
-
-  crate::tray::set_notifications_count(&window, amount, is_muted);
-}
-
-#[tauri::command]
-fn set_menu_translations(translations: HashMap<String, String>) {
-  crate::tray::set_menu_translations(translations);
-}
-
-#[tauri::command]
-fn set_window_title(window: tauri::WebviewWindow, title: String) {
-  if let Ok(mut states) = WINDOW_STATES.lock() {
-    if let Some(state) = states.get_mut(window.label()) {
-      state.title = title.clone();
-      if !state.is_overlay {
-        window.set_title(&title).unwrap_or_default();
-      }
-    }
-  }
-}
-
-#[tauri::command]
-async fn open_new_window_cmd(app: tauri::AppHandle, url: String) -> bool {
-  open_new_window(app, url).is_ok()
-}
-
-#[tauri::command]
-fn save_current_url(window: tauri::WebviewWindow) {
-  if let Ok(current_url) = window.url() {
-    let url_without_hash = strip_hash_from_url(current_url.as_str());
-    if let Ok(mut last_url) = LAST_URL.lock() {
-      *last_url = url_without_hash;
-    }
-  }
-}
-
-pub(crate) fn open_new_window(
-  app: tauri::AppHandle,
-  url: String,
-) -> Result<tauri::WebviewWindow, String> {
-  let base_url = Url::parse(BASE_URL).map_err(|err| format!("Invalid base URL: {err}"))?;
-  let url = resolve_app_url(&url, &base_url).ok_or_else(|| format!("Disallowed app URL: {url}"))?;
-  let window_label = Uuid::new_v4().to_string();
-  let new_window_builder = tauri::WebviewWindowBuilder::new(
-    &app,
-    window_label.clone(),
-    tauri::WebviewUrl::App(url.to_string().into()),
-  )
-  .additional_browser_args("--autoplay-policy=no-user-gesture-required")
-  .fullscreen(false)
-  .resizable(true)
-  .title(DEFAULT_WINDOW_TITLE)
-  .inner_size(WINDOW_WIDTH, WINDOW_HEIGHT)
-  .min_inner_size(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
-  .disable_drag_drop_handler() // Required for Drag & Drop on Windows
-  .initialization_script(&format!(
-    "window.tauri = {{ version: '{}' }};",
-    env!("CARGO_PKG_VERSION")
-  ))
-  .on_navigation(move |url| is_allowed_app_url(url, &base_url))
-  .on_download(|window, event| {
-    match event {
-      #[allow(unused_variables)]
-      DownloadEvent::Requested { destination, .. } => {
-        // On macOS, Webview does not provide basic download logic
-        #[cfg(target_os = "macos")]
-        if let Some(filename) = destination.file_name() {
-          if let Ok(downloads_dir) = window.app_handle().path().download_dir() {
-            let new_destination = downloads_dir.join(filename);
-            *destination = new_destination;
+      NewWindowResponse::Deny
+    })
+    .on_download(|window, event| {
+      match event {
+        #[allow(unused_variables)]
+        DownloadEvent::Requested { destination, .. } => {
+          // On macOS, Webview does not provide basic download logic
+          #[cfg(target_os = "macos")]
+          if let Some(filename) = destination.file_name() {
+            if let Ok(downloads_dir) = window.app_handle().path().download_dir() {
+              *destination = downloads_dir.join(filename);
+            }
           }
         }
-      }
-      DownloadEvent::Finished { url, success, .. } => {
-        window
-          .emit_to(
-            window.label(),
-            "download-finished",
-            json!({
-              "url": url.to_string(),
-              "success": success
-            }),
-          )
-          .unwrap_or_default();
-      }
-      _ => {}
-    };
-    true
-  });
+        DownloadEvent::Finished { url, success, .. } => {
+          window
+            .emit_to(window.label(), "download-finished", json!({ "url": url.to_string(), "success": success }))
+            .unwrap_or_default();
+        }
+        _ => {}
+      };
+      true
+    });
 
-  if let Ok(mut states) = WINDOW_STATES.lock() {
-    let new_state = WindowState {
-      title: DEFAULT_WINDOW_TITLE.to_string(),
-      is_overlay: cfg!(target_os = "macos"),
-      is_mobile: false,
-    };
-    states.insert(window_label.to_string(), new_state);
+  builder.build().map_err(|err| err.to_string())
+}
+
+/// Открывает внешнюю ссылку в системном браузере/приложении, отбрасывая небезопасные URL
+fn open_external(app: &AppHandle, url: &Url) {
+  let raw = url.as_str();
+  let has_bad_chars = raw.contains('\\') || raw.chars().any(|c| c.is_control() || c.is_whitespace() || "\"'<>".contains(c));
+  if !ALLOWED_EXTERNAL_SCHEMES.contains(&url.scheme()) || has_bad_chars {
+    log::warn!("[Security] Blocked navigation to unsafe URL: {raw}");
+    return;
   }
-
-  #[cfg(target_os = "macos")]
-  let new_window_builder = new_window_builder.title_bar_style(tauri::TitleBarStyle::Overlay);
-  #[cfg(target_os = "macos")]
-  let new_window_builder = new_window_builder.title("");
-
-  let window = new_window_builder.build().map_err(|err| err.to_string())?;
-
-  #[cfg(target_os = "macos")]
-  if let Some(base_window) = app.get_window(&window_label) {
-    mac::setup_traffic_light_positioner(&base_window, *TRAFFIC_LIGHT_POSITION_OVERLAY);
-  }
-
-  // Apply stored notification count to the new window
-  if let Some(state) = app.try_state::<AppState>() {
-    if let Ok(app_state) = state.lock() {
-      crate::tray::set_notifications_count(
-        &window,
-        app_state.notification_count,
-        app_state.is_muted,
-      );
+  #[allow(deprecated)]
+  {
+    use tauri_plugin_shell::ShellExt;
+    if let Err(err) = app.shell().open(raw, None) {
+      log::error!("Failed to open external URL: {err}");
     }
   }
-
-  Ok(window)
 }
 
-fn resolve_app_url(url: &str, base_url: &Url) -> Option<Url> {
-  let url = base_url.join(url).ok()?;
-
-  is_allowed_app_url(&url, base_url).then_some(url)
+/// Заголовок окна без хвостов «· Telegram», «[Inactive]» и т.п.
+fn clean_title(title: &str) -> String {
+  static RE_SUFFIX: LazyLock<regex::Regex> =
+    LazyLock::new(|| regex::Regex::new(r"(?i)\s*·\s*(telegram(\s+beta)?|ethernet)|\s*\[inactive\]").unwrap());
+  static RE_PLAIN: LazyLock<regex::Regex> = LazyLock::new(|| regex::Regex::new(r"(?i)^(telegram(\s+beta)?|ethernet)$").unwrap());
+  let clean = RE_SUFFIX.replace_all(title, "").trim().to_string();
+  if clean.is_empty() || RE_PLAIN.is_match(&clean) { DEFAULT_WINDOW_TITLE.to_string() } else { clean }
 }
 
-fn is_allowed_app_url(url: &Url, base_url: &Url) -> bool {
-  matches!(url.scheme(), "http" | "https") && url.origin() == base_url.origin()
+// --- Команды из апстрима telegram-tt (window.tauri) ---
+
+// Окно без системной рамки — стиль заголовка macOS не используется
+#[tauri::command]
+#[allow(unused_variables)]
+fn mark_title_bar_overlay(is_overlay: bool, is_mobile: Option<bool>) {}
+
+#[tauri::command]
+fn set_notifications_count(app: AppHandle, amount: i32, is_muted: bool) {
+  tray::set_unread_count(&app, amount, is_muted);
+}
+
+#[tauri::command]
+fn set_window_title(window: WebviewWindow, title: String) {
+  window.set_title(&clean_title(&title)).unwrap_or_default();
+}
+
+#[tauri::command]
+async fn open_new_window_cmd(app: AppHandle, url: String) -> bool {
+  let Ok(url) = protocol::base_url().join(&url) else { return false };
+  if !protocol::is_app_url(&url) {
+    return false;
+  }
+  open_window(app, &Uuid::new_v4().to_string(), url).is_ok()
+}
+
+#[cfg(test)]
+mod tests {
+  use super::clean_title;
+
+  #[test]
+  fn cleans_titles() {
+    assert_eq!(clean_title("Durov · Telegram"), "Durov");
+    assert_eq!(clean_title("Telegram Beta"), "ethernet");
+    assert_eq!(clean_title("Chat [Inactive]"), "Chat");
+    assert_eq!(clean_title(""), "ethernet");
+  }
 }

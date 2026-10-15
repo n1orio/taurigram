@@ -8,6 +8,13 @@ if %errorlevel% neq 0 (
     pause
     exit /b %errorlevel%
 )
+echo Сборка Tauri-оболочки...
+cargo build --manifest-path tauri\Cargo.toml
+if %errorlevel% neq 0 (
+    echo [ОШИБКА] Сборка Tauri не удалась.
+    pause
+    exit /b %errorlevel%
+)
 echo Запуск приложения...
-start "" "node_modules\electron\dist\electron.exe" .
+start "" "tauri\target\debug\ethernet.exe"
 exit

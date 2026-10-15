@@ -1,20 +1,25 @@
 {
-  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Ethernet",
+  "mainBinaryName": "ethernet",
+  "identifier": "org.ethernet.desktop",
   "app": {
+    "withGlobalTauri": false,
     "security": {
       "csp": null
     }
   },
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:1234",
-    "frontendDist": "http://localhost:1234",
+    "beforeBuildCommand": "npm run app:build:tauri",
+    "frontendDist": "./web/stub",
     "removeUnusedCommands": true
   },
   "plugins": {
     "deep-link": {
       "desktop": {
-        "schemes": ["tg"]
+        "schemes": [
+          "tg"
+        ]
       }
     }
   },
@@ -22,7 +27,9 @@
     "active": true,
     "createUpdaterArtifacts": false,
     "category": "SocialNetworking",
-    "copyright": "Telegram Air",
+    "copyright": "Copyright © 2026 ethernet",
+    "shortDescription": "Ethernet Telegram Client",
+    "longDescription": "Modern, aesthetic, and customizable Telegram desktop client powered by Web Z & Tauri.",
     "externalBin": [],
     "icon": [
       "icons/32x32.png",
@@ -31,7 +38,10 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "longDescription": "",
+    "resources": {
+      "../dist/": "dist/",
+      "../assets-bundle/": "assets-bundle/"
+    },
     "macOS": {
       "entitlements": "entitlements.mac.plist",
       "exceptionDomain": "",
@@ -39,20 +49,23 @@
       "providerShortName": null,
       "signingIdentity": null
     },
-    "resources": [],
-    "shortDescription": "",
+    "linux": {
+      "deb": {
+        "desktopTemplate": null
+      }
+    },
     "targets": [
       "app",
       "nsis",
+      "deb",
       "appimage"
     ],
     "windows": {
       "digestAlgorithm": "sha256",
       "nsis": {
-        "installerIcon": "icons/icon.ico"
+        "installerIcon": "icons/icon.ico",
+        "installMode": "currentUser"
       }
     }
-  },
-  "identifier": "org.telegram.TelegramAirBeta",
-  "productName": "Telegram Air"
+  }
 }
