@@ -27,7 +27,7 @@ import Island from '../../gili/layout/Island';
 import ConfirmDialog from '../../ui/ConfirmDialog';
 import ListItem from '../../ui/ListItem';
 
-import ethernetIcon from '../../../assets/ethernet-logo.svg';
+import taurigramIcon from '../../../assets/taurigram-logo.svg';
 import styles from './SettingsMain.module.scss';
 
 type OwnProps = {
@@ -107,7 +107,7 @@ const SettingsMain: FC<OwnProps & StateProps> = ({
           <ListItem
             multiline
             narrow
-            leftElement={<img src={ethernetIcon} alt="" className={buildClassName('ListItem-main-icon', styles.itemIcon)} draggable={false} />}
+            leftElement={<img src={taurigramIcon} alt="" className={buildClassName('ListItem-main-icon', styles.itemIcon)} draggable={false} />}
             onClick={() => openSettingsScreen({ screen: SettingsScreens.Ethernet })}
           >
             <span className="title">Taurigram</span>
