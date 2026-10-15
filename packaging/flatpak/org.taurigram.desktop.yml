@@ -1,0 +1,46 @@
+# Flatpak-манифест Taurigram. Пакует готовый .deb (из GitHub Releases или своей сборки).
+# Сборка: ./build.sh [путь/к/Taurigram_x.y.z_amd64.deb] — см. docs/FLATPAK.md
+app-id: org.taurigram.desktop
+runtime: org.gnome.Platform
+runtime-version: '49'
+sdk: org.gnome.Sdk
+command: taurigram
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --socket=pulseaudio
+  # Камера для видеозвонков и GPU-ускорение
+  - --device=all
+  # Системные уведомления и иконка в трее
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.kde.StatusNotifierWatcher
+  # Сохранение файлов в «Загрузки»
+  - --filesystem=xdg-download
+
+modules:
+  # Иконка в трее (libayatana-appindicator) — модуль из flathub/shared-modules
+  - shared-modules/libayatana-appindicator/libayatana-appindicator-gtk3.json
+
+  - name: taurigram
+    buildsystem: simple
+    sources:
+      - type: file
+        path: taurigram.deb
+      - type: file
+        path: org.taurigram.desktop.metainfo.xml
+    build-commands:
+      - ar x taurigram.deb
+      - tar -xf data.tar.*
+      - install -Dm755 usr/bin/taurigram /app/bin/taurigram
+      # Ресурсы (dist/, assets-bundle/) Tauri ищет в ../lib/Taurigram относительно бинарника
+      - mkdir -p /app/lib && cp -r usr/lib/Taurigram /app/lib/Taurigram
+      - install -Dm644 usr/share/applications/Taurigram.desktop /app/share/applications/org.taurigram.desktop.desktop
+      - desktop-file-edit --set-icon=org.taurigram.desktop --set-key=Exec --set-value='taurigram %u' /app/share/applications/org.taurigram.desktop.desktop
+      - |
+        for size_dir in usr/share/icons/hicolor/*/apps; do
+          size=$(basename "$(dirname "$size_dir")")
+          install -Dm644 "$size_dir/taurigram.png" "/app/share/icons/hicolor/$size/apps/org.taurigram.desktop.png"
+        done
+      - install -Dm644 org.taurigram.desktop.metainfo.xml /app/share/metainfo/org.taurigram.desktop.metainfo.xml

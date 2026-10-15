@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.taurigram.desktop</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Taurigram</name>
+  <summary>Customizable Telegram client</summary>
+  <description>
+    <p>
+      Unofficial Telegram desktop client built with Tauri: themes, live wallpapers,
+      JS plugins, ghost mode and a built-in SOCKS5/HTTP proxy.
+      Fork of Ethernet by imsosha, based on Telegram Web A.
+    </p>
+  </description>
+  <launchable type="desktop-id">org.taurigram.desktop.desktop</launchable>
+  <url type="homepage">https://github.com/n1orio/taurigram</url>
+  <url type="bugtracker">https://github.com/n1orio/taurigram/issues</url>
+  <developer id="io.github.n1orio">
+    <name>n1orio</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="1.0.0" date="2026-10-15"/>
+  </releases>
+</component>

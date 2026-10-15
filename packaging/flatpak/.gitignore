@@ -1,0 +1,6 @@
+build-dir/
+.flatpak-builder/
+shared-modules/
+taurigram.deb
+*.flatpak
+repo/

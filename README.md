@@ -30,6 +30,9 @@
   - Customizable message alignments (Left / Right / Center) with dynamic speech bubble corners.
   - Physics-based smooth animation presets (*Telegram*, *Snappy*, *Smooth*, *Bouncy*, *iOS*).
 
+- **👻 Ghost Mode plugin** (AyuGram-style, bundled): 👻 toggle in the chat list header, `Ctrl+Shift+G` on/off,
+  `Alt+R` to mark the open chat as read; blocks read receipts, story views, online status and typing.
+
 - **🔌 Plugin System**:
   - Extensible JS plugin API for enhancing chat features and automating workflows.
   - Built-in Safe Mode and automatic crash isolation.
@@ -89,6 +92,9 @@ npm run dist:win     # Windows installer (NSIS)
 npm run dist:linux   # Linux .deb + AppImage
 ```
 Artifacts are written to `client/tauri/target/release/bundle/`.
+
+### Flatpak
+See [docs/FLATPAK.md](docs/FLATPAK.md) (guide in Russian): `cd packaging/flatpak && ./build.sh`.
 
 ---
 
