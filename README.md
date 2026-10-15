@@ -1,11 +1,15 @@
 # Taurigram
 
 <p align="center">
-  <img src="docs/eth.svg" width="128" height="128" alt="Taurigram Logo" />
+  <img src="docs/brand/taurigram-icon.svg" width="128" height="128" alt="Taurigram Logo" />
 </p>
 
 <p align="center">
   <b>Modern, aesthetic, and customizable Telegram desktop client powered by Web Z & Tauri.</b>
+</p>
+
+<p align="center">
+  <sub>Fork of <a href="https://github.com/imsosha/ethernet">Ethernet</a> by <a href="https://github.com/imsosha">@imsosha</a> · based on <a href="https://github.com/Ajaxy/telegram-tt">Telegram Web A</a></sub>
 </p>
 
 <p align="center">
@@ -53,7 +57,7 @@
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/<your-username>/taurigram.git
+git clone https://github.com/n1orio/taurigram.git
 cd taurigram/client
 ```
 

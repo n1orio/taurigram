@@ -1,11 +1,15 @@
 # Taurigram — Telegram Desktop Client
 
 <p align="center">
-  <img src="docs/eth.svg" width="128" height="128" alt="Taurigram Logo" />
+  <img src="docs/brand/taurigram-icon.svg" width="128" height="128" alt="Taurigram Logo" />
 </p>
 
 <p align="center">
   <b>Современный, эстетичный и функциональный Telegram-клиент на базе Web Z и Tauri с поддержкой тем, плагинов и режима невидимки.</b>
+</p>
+
+<p align="center">
+  <sub>Форк <a href="https://github.com/imsosha/ethernet">Ethernet</a> от <a href="https://github.com/imsosha">@imsosha</a> · на основе <a href="https://github.com/Ajaxy/telegram-tt">Telegram Web A</a></sub>
 </p>
 
 <p align="center">
@@ -67,7 +71,7 @@
 
 #### 1. Клонирование репозитория
 ```bash
-git clone https://github.com/<your-username>/taurigram.git
+git clone https://github.com/n1orio/taurigram.git
 cd taurigram/client
 ```
 
