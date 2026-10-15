@@ -1,7 +1,7 @@
-# Ethernet — Telegram Desktop Client
+# Taurigram — Telegram Desktop Client
 
 <p align="center">
-  <img src="docs/eth.svg" width="128" height="128" alt="Ethernet Logo" />
+  <img src="docs/eth.svg" width="128" height="128" alt="Taurigram Logo" />
 </p>
 
 <p align="center">
@@ -51,9 +51,9 @@
 ## 🚀 Установка и запуск
 
 ### Готовые сборки (Releases)
-Готовые портативные версии для **Windows** и **Linux** доступны на странице [Releases](https://github.com/imsosha/ethernet/releases):
-- **Windows**: `Ethernet-Windows-x64.exe` — портативный `.exe` (не требует установки, готов к запуску).
-- **Linux**: `Ethernet-Linux-x64-Portable.tar.gz` — распакуйте архив и запустите файл `Ethernet` двойным кликом мыши (или через `./start.sh`).
+Сборки для **Windows** и **Linux** публикуются на странице Releases репозитория:
+- **Windows**: `Taurigram_<версия>_x64-setup.exe` — установщик (ставится в профиль пользователя, права администратора не нужны).
+- **Linux**: `.deb` для Debian/Ubuntu или `.AppImage` для любых дистрибутивов (`chmod +x` и запуск).
 
 ---
 
@@ -67,8 +67,8 @@
 
 #### 1. Клонирование репозитория
 ```bash
-git clone https://github.com/imsosha/ethernet.git
-cd ethernet/client
+git clone https://github.com/<your-username>/taurigram.git
+cd taurigram/client
 ```
 
 #### 2. Установка зависимостей и ключей
@@ -101,7 +101,7 @@ npm run dist:linux
 ## 📁 Структура проекта
 
 ```
-ethernet/
+taurigram/
 ├── client/                     # Исходный код веб-клиента и Tauri-оболочки
 │   ├── tauri/                  # Нативная часть (Rust)
 │   │   ├── src/lib.rs          # Окна, трей, команды
@@ -117,7 +117,7 @@ ethernet/
 ├── docs/                       # Техническая документация
 │   ├── ARCHITECTURE.md         # Архитектура и взаимодействие компонентов
 │   └── THEMES_AND_PLUGINS.md   # Руководство по созданию тем и плагинов
-├── ethernet-settings.json      # Конфигурация настроек по умолчанию
+├── taurigram-settings.json      # Конфигурация настроек по умолчанию
 └── README.md                   # Документация на английском языке
 ```
 
@@ -125,6 +125,7 @@ ethernet/
 
 ## 📄 Лицензия и благодарности
 
-- **Ethernet** распространяется под лицензией [GNU General Public License v3.0 (GPL-3.0)](LICENSE).
+- **Taurigram** — форк [Ethernet](https://github.com/imsosha/ethernet) от imsosha, перенесённый с Electron на Tauri.
+- **Taurigram** распространяется под лицензией [GNU General Public License v3.0 (GPL-3.0)](LICENSE).
 - Клиент основан на исходном коде [Telegram Web A / Web Z](https://github.com/Ajaxy/telegram-tt), разработанном Денисом Ольшиным и сообществом Telegram, лицензированном под GNU GPL v3.
 - Проект является независимым сторонним клиентом и не связан с официальной компанией Telegram FZ-LLC. Telegram является зарегистрированным товарным знаком Telegram FZ-LLC.

@@ -21,7 +21,7 @@ pub(crate) static TRAY_ICON_BYTES: &[u8] = include_bytes!("../../icons/32x32.png
 pub(crate) static TRAY_BASE_ICON: LazyLock<Image<'static>> =
   LazyLock::new(|| Image::from_bytes(TRAY_ICON_BYTES).expect("Failed to load base tray icon"));
 
-const TRAY_TOOLTIP: &str = "Ethernet";
+const TRAY_TOOLTIP: &str = "Taurigram";
 
 pub const MENU_ITEM_OPEN_ID: &str = "open";
 pub const MENU_ITEM_NOTIFICATIONS_ID: &str = "notifications";
@@ -32,7 +32,7 @@ pub(super) static TRAY_HANDLE: LazyLock<Mutex<Option<TrayIcon>>> = LazyLock::new
 static NOTIFICATIONS_ITEM: LazyLock<Mutex<Option<CheckMenuItem<tauri::Wry>>>> = LazyLock::new(|| Mutex::new(None));
 
 pub fn init(app: &AppHandle) -> Result<(), tauri::Error> {
-  let open_i = MenuItem::with_id(app, MENU_ITEM_OPEN_ID, "Открыть Ethernet", true, None::<&str>)?;
+  let open_i = MenuItem::with_id(app, MENU_ITEM_OPEN_ID, "Открыть Taurigram", true, None::<&str>)?;
   let notifications_i = CheckMenuItem::with_id(
     app,
     MENU_ITEM_NOTIFICATIONS_ID,

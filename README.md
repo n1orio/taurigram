@@ -1,7 +1,7 @@
-# Ethernet Telegram Client
+# Taurigram
 
 <p align="center">
-  <img src="docs/eth.svg" width="128" height="128" alt="Ethernet Logo" />
+  <img src="docs/eth.svg" width="128" height="128" alt="Taurigram Logo" />
 </p>
 
 <p align="center">
@@ -53,8 +53,8 @@
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/imsosha/ethernet.git
-cd ethernet/client
+git clone https://github.com/<your-username>/taurigram.git
+cd taurigram/client
 ```
 
 2. Install dependencies and set API keys:
@@ -92,6 +92,7 @@ Artifacts are written to `client/tauri/target/release/bundle/`.
 
 ## 📄 License & Credits
 
-- **Ethernet** is licensed under the [GNU General Public License v3.0 (GPL-3.0)](LICENSE).
+- **Taurigram** is a fork of [Ethernet](https://github.com/imsosha/ethernet) by imsosha, ported from Electron to Tauri.
+- **Taurigram** is licensed under the [GNU General Public License v3.0 (GPL-3.0)](LICENSE).
 - Based on [Telegram Web A / Web Z](https://github.com/Ajaxy/telegram-tt) by Denis Olshin and the Telegram community, licensed under GNU GPL v3.
 - This application is an independent client and is not affiliated with, endorsed by, or sponsored by Telegram LLC. Telegram is a registered trademark of Telegram FZ-LLC.

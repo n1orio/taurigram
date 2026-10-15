@@ -1249,36 +1249,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ethernet"
-version = "12.0.41"
-dependencies = [
- "ab_glyph",
- "base64 0.22.1",
- "image",
- "imageproc",
- "log",
- "regex",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-deep-link",
- "tauri-plugin-dialog",
- "tauri-plugin-log",
- "tauri-plugin-notification",
- "tauri-plugin-os",
- "tauri-plugin-process",
- "tauri-plugin-shell",
- "tauri-plugin-single-instance",
- "tauri-plugin-updater",
- "tauri-plugin-window-state",
- "tokio",
- "url",
- "uuid",
-]
-
-[[package]]
 name = "event-listener"
 version = "5.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5436,6 +5406,36 @@ dependencies = [
  "thiserror 2.0.20",
  "windows",
  "windows-version",
+]
+
+[[package]]
+name = "taurigram"
+version = "12.0.41"
+dependencies = [
+ "ab_glyph",
+ "base64 0.22.1",
+ "image",
+ "imageproc",
+ "log",
+ "regex",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-deep-link",
+ "tauri-plugin-dialog",
+ "tauri-plugin-log",
+ "tauri-plugin-notification",
+ "tauri-plugin-os",
+ "tauri-plugin-process",
+ "tauri-plugin-shell",
+ "tauri-plugin-single-instance",
+ "tauri-plugin-updater",
+ "tauri-plugin-window-state",
+ "tokio",
+ "url",
+ "uuid",
 ]
 
 [[package]]

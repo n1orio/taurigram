@@ -1,4 +1,4 @@
-// Ethernet Client — браузерный лоадер тем и плагинов.
+// Taurigram — браузерный лоадер тем и плагинов.
 // Инжектится в страницу через Tauri-протокол app:// (/ethernet/loader.js).
 
 (function () {
@@ -3135,7 +3135,7 @@
     titlebar.id = 'ethernet-titlebar';
     titlebar.innerHTML = `
       <div class="ethernet-titlebar-left">
-        <div class="ethernet-titlebar-logo" title="Ethernet">
+        <div class="ethernet-titlebar-logo" title="Taurigram">
           <svg viewBox="0 0 133 133" width="18" height="18" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;display:block;">
             <g transform="matrix(0.04392,0,0,0.04392,66.666667,66.666667)">
               <g transform="matrix(1,0,0,1,-1333.333333,-1333.333333)">
@@ -3147,7 +3147,7 @@
           </svg>
         </div>
       </div>
-      <div class="ethernet-titlebar-center" id="ethernet-titlebar-text">ethernet</div>
+      <div class="ethernet-titlebar-center" id="ethernet-titlebar-text">taurigram</div>
       <div class="ethernet-titlebar-controls">
         <button class="ethernet-titlebar-btn" id="ethernet-btn-min" title="Свернуть">
           <svg viewBox="0 0 10 10" width="10" height="10">
@@ -3215,12 +3215,11 @@
       if (titleText) {
         let t = document.title || '';
         t = t.replace(/\s*·\s*Telegram(\s+Beta)?/gi, '')
-             .replace(/\s*·\s*Ethernet/gi, '')
-             .replace(/\s*·\s*ethernet/gi, '')
+             .replace(/\s*·\s*(Taurigram|Ethernet)/gi, '')
              .replace(/\s*\[Inactive\]/gi, '')
              .trim();
-        if (!t || /^(telegram(\s+beta)?|ethernet)$/i.test(t)) {
-          t = 'ethernet';
+        if (!t || /^(telegram(\s+beta)?|taurigram|ethernet)$/i.test(t)) {
+          t = 'taurigram';
         }
         titleText.textContent = t;
       }

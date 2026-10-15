@@ -1,7 +1,7 @@
-// Расположение пользовательских данных Ethernet: themes/, plugins/, wallpapers/ и ethernet-settings.json.
+// Расположение пользовательских данных Taurigram: themes/, plugins/, wallpapers/ и taurigram-settings.json.
 //
 // Порядок выбора корня:
-//   1. `ETHERNET_ROOT` из окружения;
+//   1. `TAURIGRAM_ROOT` из окружения;
 //   2. debug-сборка — корень репозитория (как `npm run app` у Electron-версии);
 //   3. папка AppImage-файла;
 //   4. папка исполняемого файла, если в неё можно писать (portable / tar.gz);
@@ -25,6 +25,10 @@ pub struct Paths {
 
 static PATHS: OnceLock<Paths> = OnceLock::new();
 
+const SETTINGS_FILE_NAME: &str = "taurigram-settings.json";
+// Настройки Ethernet, из которых Taurigram вырос, подхватываются при первом запуске
+const LEGACY_SETTINGS_FILE_NAME: &str = "ethernet-settings.json";
+
 pub fn get() -> &'static Paths {
   PATHS.get().expect("paths::init must be called first")
 }
@@ -36,10 +40,10 @@ pub fn init(app: &tauri::AppHandle) {
     themes: root.join("themes"),
     plugins: root.join("plugins"),
     wallpapers: root.join("wallpapers"),
-    settings_file: root.join("ethernet-settings.json"),
+    settings_file: root.join(SETTINGS_FILE_NAME),
     root,
   };
-  log::info!("[paths] Ethernet root: {}, dist: {}", paths.root.display(), paths.dist.display());
+  log::info!("[paths] Taurigram root: {}, dist: {}", paths.root.display(), paths.dist.display());
   let _ = PATHS.set(paths);
   ensure_dirs();
   seed_default_assets(app);
@@ -53,7 +57,7 @@ pub fn ensure_dirs() {
 }
 
 fn resolve_root(app: &tauri::AppHandle) -> PathBuf {
-  if let Some(root) = std::env::var_os("ETHERNET_ROOT") {
+  if let Some(root) = std::env::var_os("TAURIGRAM_ROOT") {
     return PathBuf::from(root);
   }
 
@@ -79,11 +83,11 @@ fn resolve_root(app: &tauri::AppHandle) -> PathBuf {
   app
     .path()
     .app_data_dir()
-    .unwrap_or_else(|_| std::env::temp_dir().join("ethernet"))
+    .unwrap_or_else(|_| std::env::temp_dir().join("taurigram"))
 }
 
 fn resolve_dist(app: &tauri::AppHandle) -> PathBuf {
-  if let Some(dist) = std::env::var_os("ETHERNET_DIST") {
+  if let Some(dist) = std::env::var_os("TAURIGRAM_DIST") {
     return PathBuf::from(dist);
   }
   let dev_dist = Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("dist");
@@ -100,7 +104,7 @@ fn resolve_dist(app: &tauri::AppHandle) -> PathBuf {
 }
 
 fn is_writable(dir: &Path) -> bool {
-  let probe = dir.join(format!(".ethernet-write-test-{}", std::process::id()));
+  let probe = dir.join(format!(".taurigram-write-test-{}", std::process::id()));
   let ok = fs::write(&probe, b"test").is_ok();
   let _ = fs::remove_file(&probe);
   ok
@@ -120,10 +124,16 @@ fn bundle_dir(app: &tauri::AppHandle) -> Option<PathBuf> {
 
 // Копирует стандартные темы/обои/плагины/настройки из assets-bundle, не перезаписывая существующие
 fn seed_default_assets(app: &tauri::AppHandle) {
-  let Some(bundle) = bundle_dir(app) else { return };
   let p = get();
 
-  let bundle_settings = bundle.join("ethernet-settings.json");
+  let legacy_settings = p.root.join(LEGACY_SETTINGS_FILE_NAME);
+  if !p.settings_file.exists() && legacy_settings.exists() {
+    let _ = fs::copy(&legacy_settings, &p.settings_file);
+  }
+
+  let Some(bundle) = bundle_dir(app) else { return };
+
+  let bundle_settings = bundle.join(SETTINGS_FILE_NAME);
   if !p.settings_file.exists() && bundle_settings.exists() {
     let _ = fs::copy(&bundle_settings, &p.settings_file);
   }

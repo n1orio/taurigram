@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Ethernet",
-  "mainBinaryName": "ethernet",
-  "identifier": "org.ethernet.desktop",
+  "productName": "Taurigram",
+  "mainBinaryName": "taurigram",
+  "identifier": "org.taurigram.desktop",
   "app": {
     "withGlobalTauri": false,
     "security": {
@@ -27,9 +27,9 @@
     "active": true,
     "createUpdaterArtifacts": false,
     "category": "SocialNetworking",
-    "copyright": "Copyright © 2026 ethernet",
-    "shortDescription": "Ethernet Telegram Client",
-    "longDescription": "Modern, aesthetic, and customizable Telegram desktop client powered by Web Z & Tauri.",
+    "copyright": "Copyright © 2026 Taurigram contributors",
+    "shortDescription": "Taurigram — Telegram client",
+    "longDescription": "Customizable Telegram desktop client built with Tauri, based on Ethernet and Telegram Web A.",
     "externalBin": [],
     "icon": [
       "icons/32x32.png",

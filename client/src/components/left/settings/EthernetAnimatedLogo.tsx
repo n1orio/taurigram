@@ -158,7 +158,7 @@ const EthernetAnimatedLogo: FC<OwnProps> = ({ onClick, className }) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       title="@ethernetgram"
-      aria-label="Ethernet Official Channel"
+      aria-label="Taurigram Official Channel"
     >
       <span className={styles.foregroundText}>
         {letters.map((char, index) => {

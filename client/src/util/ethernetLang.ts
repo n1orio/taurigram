@@ -1,7 +1,7 @@
 import type { LangFn } from './localization';
 
 const DICTIONARY: Record<string, { ru: string; en: string }> = {
-  EthernetModSettings: { ru: 'Настройки Ethernet', en: 'Mod settings' },
+  EthernetModSettings: { ru: 'Настройки Taurigram', en: 'Mod settings' },
   EthernetFunctions: { ru: 'Функции', en: 'Functions' },
   EthernetFunctionsDesc: { ru: 'Режим призрака, твики и скрытность', en: 'Ghost mode, tweaks and privacy' },
   EthernetNetwork: { ru: 'Сеть', en: 'Network' },
@@ -19,9 +19,9 @@ const DICTIONARY: Record<string, { ru: string; en: string }> = {
   EthernetPluginsDesc: { ru: 'Расширение клиента на JS', en: 'Extend the client with JS' },
   EthernetPluginsHint: { ru: 'Плагины выполняются в контексте страницы. Устанавливайте только проверенный код.', en: 'Plugins run in the page context. Only install code you trust.' },
   EthernetThemeChannel: { ru: '@ethTheme', en: '@ethTheme' },
-  EthernetThemeChannelDesc: { ru: 'Канал с темами для Ethernet', en: 'Themes channel for Ethernet' },
+  EthernetThemeChannelDesc: { ru: 'Канал с темами для Taurigram', en: 'Themes channel for Taurigram' },
   EthernetPluginChannel: { ru: '@ethPlugin', en: '@ethPlugin' },
-  EthernetPluginChannelDesc: { ru: 'Канал с плагинами для Ethernet', en: 'Plugins channel for Ethernet' },
+  EthernetPluginChannelDesc: { ru: 'Канал с плагинами для Taurigram', en: 'Plugins channel for Taurigram' },
   EthernetSafeMode: { ru: 'Безопасный режим', en: 'Safe Mode' },
   EthernetSafeModeDesc: { ru: 'Отключает все плагины. Включается автоматически при ошибках и сбоях в коде плагинов.', en: 'Disables all plugins. Automatically enabled on plugin errors/crashes.' },
   EthernetSafeModeActive: { ru: 'Безопасный режим активен — все плагины временно отключены', en: 'Safe Mode active — all plugins are disabled' },

@@ -6,9 +6,9 @@ import type {
   ResaleGiftsFilterOptions,
 } from './types';
 
-export const APP_CODE_NAME = 'Ethernet';
+export const APP_CODE_NAME = 'Taurigram';
 export const APP_ENV = import.meta.env.TG_APP_ENV;
-export const APP_NAME = import.meta.env.TG_APP_NAME || 'Ethernet';
+export const APP_NAME = import.meta.env.TG_APP_NAME || 'Taurigram';
 
 export const PRODUCTION_HOSTNAME = 'web.telegram.org';
 export const PRODUCTION_URL = 'https://web.telegram.org/a';
@@ -35,8 +35,8 @@ export const BETA_CHANGELOG_URL = 'https://telegra.ph/WebA-Beta-03-20';
 export const DEBUG_ALERT_MSG = 'Shoot!\nSomething went wrong, please see the error details in Dev Tools Console.';
 export const DEBUG_GRAMJS = false;
 
-export const PAGE_TITLE = import.meta.env.TG_APP_TITLE || 'ethernet';
-export const PAGE_TITLE_TAURI = 'ethernet';
+export const PAGE_TITLE = import.meta.env.TG_APP_TITLE || 'taurigram';
+export const PAGE_TITLE_TAURI = 'taurigram';
 export const INACTIVE_MARKER = '[Inactive]';
 export const TELEGRAM_API_ID = Number(import.meta.env.TG_TELEGRAM_API_ID);
 export const TELEGRAM_API_HASH = import.meta.env.TG_TELEGRAM_API_HASH;

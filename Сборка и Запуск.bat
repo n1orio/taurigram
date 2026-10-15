@@ -1,5 +1,5 @@
 @echo off
-title Ethernet Telegram - Сборка и Запуск
+title Taurigram - Сборка и Запуск
 cd /d "%~dp0client"
 echo Сборка клиента...
 call npm run app:build
@@ -16,5 +16,5 @@ if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
 echo Запуск приложения...
-start "" "tauri\target\debug\ethernet.exe"
+start "" "tauri\target\debug\taurigram.exe"
 exit

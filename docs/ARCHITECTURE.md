@@ -1,4 +1,4 @@
-# Ethernet Telegram Client — архитектура
+# Taurigram — архитектура
 
 ## Десктопная оболочка: Tauri 2
 
@@ -18,10 +18,10 @@ Windows, WebKitGTK на Linux) вместо Electron. Код оболочки �
 Перетаскивание окна за топбар лоадера, F12/Ctrl+Shift+I (DevTools) и
 двойной клик для разворачивания обрабатывает `web/bridge.js`.
 
-Данные пользователя (`themes/`, `plugins/`, `wallpapers/`, `ethernet-settings.json`)
+Данные пользователя (`themes/`, `plugins/`, `wallpapers/`, `taurigram-settings.json`)
 лежат: в dev-сборке — в корне репозитория; в portable/AppImage — рядом с файлом
 программы; в установленной версии — в каталоге данных приложения. Переопределение —
-переменная `ETHERNET_ROOT`.
+переменная `TAURIGRAM_ROOT`.
 
 Сессия Telegram хранится в IndexedDB WebView, поэтому после перехода с Electron
 нужно войти заново.

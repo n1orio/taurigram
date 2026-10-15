@@ -1,6 +1,6 @@
 name: Tauri build
 
-# Собирает Ethernet под Windows (NSIS) и Linux (deb + AppImage).
+# Собирает Taurigram под Windows (NSIS) и Linux (deb + AppImage).
 # Нужны секреты репозитория TELEGRAM_API_ID и TELEGRAM_API_HASH.
 # При пуше тега v* создаётся черновик релиза с артефактами.
 
@@ -58,12 +58,12 @@ jobs:
           projectPath: client
           args: --bundles ${{ matrix.bundles }}
           tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
-          releaseName: ${{ startsWith(github.ref, 'refs/tags/') && format('ethernet {0}', github.ref_name) || '' }}
+          releaseName: ${{ startsWith(github.ref, 'refs/tags/') && format('Taurigram {0}', github.ref_name) || '' }}
           releaseDraft: true
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ethernet-${{ matrix.platform }}
+          name: taurigram-${{ matrix.platform }}
           path: |
             client/tauri/target/release/bundle/nsis/*.exe
             client/tauri/target/release/bundle/deb/*.deb

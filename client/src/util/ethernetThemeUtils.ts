@@ -49,7 +49,7 @@ export function splitThemeCss(css: string): { rootCss: string; customCss: string
  */
 export function modToCss(mod: HermesMod, themeName = 'Кастомная', customCssOverride?: string): string {
   const lines: string[] = [
-    `/* Ethernet Telegram Theme: ${themeName} */`,
+    `/* Taurigram Theme: ${themeName} */`,
     `:root {`,
   ];
 

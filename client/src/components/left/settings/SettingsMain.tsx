@@ -110,7 +110,7 @@ const SettingsMain: FC<OwnProps & StateProps> = ({
             leftElement={<img src={ethernetIcon} alt="" className={buildClassName('ListItem-main-icon', styles.itemIcon)} draggable={false} />}
             onClick={() => openSettingsScreen({ screen: SettingsScreens.Ethernet })}
           >
-            <span className="title">Ethernet</span>
+            <span className="title">Taurigram</span>
             <span className="subtitle">{getEthernetString(lang, 'EthernetModSettings')}</span>
           </ListItem>
           <ListItem

@@ -19,7 +19,7 @@ mod tray;
 use deeplink::Deeplink;
 
 pub const MAIN_WINDOW_LABEL: &str = "main";
-pub const DEFAULT_WINDOW_TITLE: &str = "ethernet";
+pub const DEFAULT_WINDOW_TITLE: &str = "taurigram";
 
 pub const WINDOW_WIDTH: f64 = 1280.0;
 pub const WINDOW_HEIGHT: f64 = 832.0;
@@ -285,8 +285,8 @@ fn open_external(app: &AppHandle, url: &Url) {
 /// Заголовок окна без хвостов «· Telegram», «[Inactive]» и т.п.
 fn clean_title(title: &str) -> String {
   static RE_SUFFIX: LazyLock<regex::Regex> =
-    LazyLock::new(|| regex::Regex::new(r"(?i)\s*·\s*(telegram(\s+beta)?|ethernet)|\s*\[inactive\]").unwrap());
-  static RE_PLAIN: LazyLock<regex::Regex> = LazyLock::new(|| regex::Regex::new(r"(?i)^(telegram(\s+beta)?|ethernet)$").unwrap());
+    LazyLock::new(|| regex::Regex::new(r"(?i)\s*·\s*(telegram(\s+beta)?|taurigram|ethernet)|\s*\[inactive\]").unwrap());
+  static RE_PLAIN: LazyLock<regex::Regex> = LazyLock::new(|| regex::Regex::new(r"(?i)^(telegram(\s+beta)?|taurigram|ethernet)$").unwrap());
   let clean = RE_SUFFIX.replace_all(title, "").trim().to_string();
   if clean.is_empty() || RE_PLAIN.is_match(&clean) { DEFAULT_WINDOW_TITLE.to_string() } else { clean }
 }
@@ -324,8 +324,9 @@ mod tests {
   #[test]
   fn cleans_titles() {
     assert_eq!(clean_title("Durov · Telegram"), "Durov");
-    assert_eq!(clean_title("Telegram Beta"), "ethernet");
+    assert_eq!(clean_title("Durov · Taurigram"), "Durov");
+    assert_eq!(clean_title("Telegram Beta"), "taurigram");
     assert_eq!(clean_title("Chat [Inactive]"), "Chat");
-    assert_eq!(clean_title(""), "ethernet");
+    assert_eq!(clean_title(""), "taurigram");
   }
 }

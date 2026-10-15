@@ -107,7 +107,7 @@ const SettingsHeader: FC<OwnProps> = ({
       case SettingsScreens.Experimental:
         return <h3>{oldLang('lng_settings_experimental')}</h3>;
       case SettingsScreens.Ethernet:
-        return <h3>Ethernet</h3>;
+        return <h3>Taurigram</h3>;
       case SettingsScreens.EthernetFunctions:
         return <h3>{getEthernetString(lang, 'EthernetFunctions')}</h3>;
       case SettingsScreens.EthernetNetwork:

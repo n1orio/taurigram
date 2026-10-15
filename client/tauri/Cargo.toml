@@ -1,10 +1,9 @@
 [package]
-name = "ethernet"
+name = "taurigram"
 version = "12.0.41"
-description = "Ethernet Telegram Client"
-authors = ["ethernet"]
+description = "Taurigram — Telegram client"
+authors = ["taurigram"]
 license = "GPL-3.0-or-later"
-repository = "https://github.com/imsosha/ethernet"
 edition = "2024"
 rust-version = "1.88"
 

@@ -1,5 +1,5 @@
 @echo off
 setlocal
 cd /d "%~dp0client"
-start "" "tauri\target\debug\ethernet.exe"
+start "" "tauri\target\debug\taurigram.exe"
 exit

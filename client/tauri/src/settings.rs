@@ -1,4 +1,4 @@
-// Единый менеджер ethernet-settings.json.
+// Единый менеджер taurigram-settings.json.
 // Файл перечитывается при каждом обращении (источник истины — диск), запись сериализуется мьютексом.
 
 use std::fs;
@@ -33,10 +33,10 @@ fn write(s: &Obj) {
   match serde_json::to_string_pretty(s) {
     Ok(content) => {
       if let Err(err) = fs::write(path, content) {
-        log::error!("[ethernet-settings] write error: {err}");
+        log::error!("[settings] write error: {err}");
       }
     }
-    Err(err) => log::error!("[ethernet-settings] serialize error: {err}"),
+    Err(err) => log::error!("[settings] serialize error: {err}"),
   }
 }
 

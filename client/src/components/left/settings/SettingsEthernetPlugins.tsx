@@ -148,7 +148,7 @@ const SettingsEthernetPlugins: FC<OwnProps> = ({ isActive, onReset }) => {
       setEditing({
         name: '',
         description: '',
-        code: '/**\n * Ethernet Plugin\n */\n\n(function() {\n  console.log("Hello from plugin!");\n})();\n',
+        code: '/**\n * Taurigram Plugin\n */\n\n(function() {\n  console.log("Hello from plugin!");\n})();\n',
       });
     }
   });

@@ -1,11 +1,9 @@
 {
-  "name": "ethernet",
+  "name": "taurigram",
   "version": "12.0.41",
-  "description": "Ethernet Telegram Client",
-  "homepage": "https://ethernet.org",
+  "description": "Taurigram — Telegram desktop client",
   "author": {
-    "name": "ethernet",
-    "email": "contact@ethernet.org"
+    "name": "taurigram"
   },
   "license": "GPL-3.0-or-later",
   "type": "module",

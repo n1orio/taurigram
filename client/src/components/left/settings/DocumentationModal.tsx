@@ -100,7 +100,7 @@ const DocumentationModal: FC<OwnProps> = ({
                   <span>Архитектура и Формат Тем</span>
                 </div>
                 <p className={styles.text}>
-                  Темы в Ethernet — это стандартные <code>.css</code> файлы с объявлением переменных в блоке <code>:root</code>. 
+                  Темы в Taurigram — это стандартные <code>.css</code> файлы с объявлением переменных в блоке <code>:root</code>. 
                   Все переменные автоматически применяются с наивысшим приоритетом, переопределяя встроенные палитры Telegram Web.
                 </p>
               </div>
@@ -292,7 +292,7 @@ const DocumentationModal: FC<OwnProps> = ({
                   <span>Правила для Нейросетей и LLM</span>
                 </div>
                 <p className={styles.text}>
-                  При генерации кода плагинов и тем для Ethernet Client следуйте строгим спецификациям:
+                  При генерации кода плагинов и тем для Taurigram Client следуйте строгим спецификациям:
                 </p>
                 <ul className={styles.list}>
                   <li><strong>Темы:</strong> Генерируйте чистый CSS с блоком <code>:root</code>, определяя все обязательные переменные <code>--color-*</code> и <code>--border-radius-*</code>. Контрастность текста к фону должна быть не ниже 4.5:1.</li>
@@ -473,7 +473,7 @@ api.onUpdate((update) => {
 const state = store.getGlobal();
 const actions = store.getActions();`;
 
-const PROMPT_THEME = `Ты — дизайнер интерфейсов для Ethernet Telegram Client.
+const PROMPT_THEME = `Ты — дизайнер интерфейсов для Taurigram Client.
 Создай тему в формате CSS.
 Обязательно используй переменные в блоке :root:
 - --color-background: #HEX;
@@ -491,7 +491,7 @@ const PROMPT_THEME = `Ты — дизайнер интерфейсов для Et
 
 Тема должна быть контрастной, гармоничной и современной.`;
 
-const PROMPT_PLUGIN = `Ты — разработчик расширений для Ethernet Telegram Client.
+const PROMPT_PLUGIN = `Ты — разработчик расширений для Taurigram Client.
 Напиши JavaScript плагин в формате IIFE:
 (function() {
   const { api, store, addStyle, log, on } = window.ethernet;
@@ -587,10 +587,10 @@ const EXAMPLE_THEME_CODE = `:root {
   --blur-strength: 10px;
 }`;
 
-const FULL_MARKDOWN_DOCS = `# Документация Ethernet Client: Темы и Плагины
+const FULL_MARKDOWN_DOCS = `# Документация Taurigram Client: Темы и Плагины
 
 ## 1. Темы (CSS)
-Темы в клиенте Ethernet — это файлы .css со списком переменных :root.
+Темы в клиенте Taurigram — это файлы .css со списком переменных :root.
 Основные переменные:
 - --color-background: основной фон
 - --color-background-secondary: фон входящих сообщений
