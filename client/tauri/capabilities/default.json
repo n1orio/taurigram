@@ -53,6 +53,7 @@
     "allow-ethernet-clear-last-crashed-plugin",
     "allow-ethernet-report-plugin-crash",
     "allow-ethernet-set-unread-count",
+    "allow-ethernet-export-tdata",
     "allow-notif-ready",
     "allow-notif-clicked",
     "allow-notif-dismissed",

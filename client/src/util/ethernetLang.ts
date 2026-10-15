@@ -33,6 +33,23 @@ const DICTIONARY: Record<string, { ru: string; en: string }> = {
   EthernetDeletePluginConfirm: { ru: 'Вы уверены, что хотите удалить этот плагин?', en: 'Are you sure you want to delete this plugin?' },
   EthernetExperimental: { ru: 'Экспериментальные', en: 'Experimental' },
   EthernetExperimentalDesc: { ru: 'Экспериментальные возможности Telegram', en: 'Telegram experimental features' },
+  EthernetExportTdata: { ru: 'Экспорт сессии в Telegram Desktop', en: 'Export session to Telegram Desktop' },
+  EthernetExportTdataDesc: {
+    ru: 'Создаёт папку tdata для входа без кода',
+    en: 'Creates a tdata folder to sign in without a code',
+  },
+  EthernetExportTdataConfirm: {
+    ru: 'Папка tdata даёт полный доступ к вашему аккаунту. Не передавайте её никому. '
+      + 'Положите её в папку Telegram Desktop (при закрытом клиенте) и запустите его.',
+    en: 'The tdata folder gives full access to your account. Never share it. '
+      + 'Put it into the Telegram Desktop folder (with the app closed) and start it.',
+  },
+  EthernetExportTdataButton: { ru: 'Экспортировать', en: 'Export' },
+  EthernetExportTdataDone: { ru: 'Сессия сохранена:', en: 'Session saved:' },
+  EthernetExportTdataUnavailable: {
+    ru: 'Сессия не найдена — войдите в аккаунт',
+    en: 'No session found — sign in first',
+  },
   EthernetAuthorChannel: { ru: '@niori0', en: '@niori0' },
   EthernetAuthorChannelDesc: { ru: 'Официальный канал', en: 'Official channel and updates' },
   EthernetThemeEditor: { ru: 'Редактор тем', en: 'Theme Editor' },

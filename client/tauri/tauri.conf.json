@@ -7,7 +7,8 @@
     "withGlobalTauri": false,
     "security": {
       "csp": null
-    }
+    },
+    "macOSPrivateApi": true
   },
   "build": {
     "beforeBuildCommand": "npm run app:build:tauri",
@@ -20,6 +21,15 @@
         "schemes": [
           "tg"
         ]
+      }
+    },
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM1MjFFODUxMTk5NzBGMUUKUldRZUQ1Y1pVZWdoTlJHcW4rWXNNaU5FK214ZzZkc09NQ3BJNFU2bTNTU3NWNHhhK2EwT1JLVHYK",
+      "endpoints": [
+        "https://github.com/n1orio/taurigram/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
       }
     }
   },
@@ -67,5 +77,6 @@
         "installMode": "currentUser"
       }
     }
-  }
+  },
+  "version": "1.0.0"
 }

@@ -52,6 +52,7 @@ fn main() {
       "ethernet_clear_last_crashed_plugin",
       "ethernet_report_plugin_crash",
       "ethernet_set_unread_count",
+      "ethernet_export_tdata",
       // Окно кастомных уведомлений
       "notif_ready",
       "notif_clicked",

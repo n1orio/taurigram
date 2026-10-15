@@ -80,6 +80,7 @@ export interface HermesDesktopApi {
   lastCrashedPluginGet?: () => Promise<{ id: string; error: string; time: number } | null>;
   clearLastCrashedPlugin?: () => Promise<boolean>;
   reportPluginCrash?: (pluginId: string, error: string) => Promise<any>;
+  exportTdata?: (session: { userId: string; mainDcId: number; keys: Record<number, string> }) => Promise<string | null>;
 }
 
 export interface HermesPluginHookResult<T = any> {

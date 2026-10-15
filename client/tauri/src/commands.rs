@@ -635,3 +635,45 @@ pub fn notif_set_height(app: AppHandle, window: WebviewWindow, height: f64) -> C
   notifications::set_height(&app, height);
   Ok(())
 }
+
+// --- Экспорт сессии в Telegram Desktop (tdata) ---
+
+/// Создаёт папку `tdata` с текущей сессией в выбранном пользователем каталоге.
+/// `session` = { userId, mainDcId, keys: { [dcId]: hex } }. Возвращает путь или `null` при отмене.
+#[tauri::command]
+pub async fn ethernet_export_tdata(app: AppHandle, session: Value) -> CmdResult {
+  let user_id: u64 = session
+    .get("userId")
+    .and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok())))
+    .filter(|id| *id > 0)
+    .ok_or("Нет id пользователя — войдите в аккаунт")?;
+  let main_dc_id = session
+    .get("mainDcId")
+    .and_then(Value::as_i64)
+    .filter(|dc| (1..=5).contains(dc))
+    .ok_or("Некорректный основной DC")? as i32;
+  let mut keys: Vec<(i32, [u8; 256])> = session
+    .get("keys")
+    .and_then(Value::as_object)
+    .map(|obj| {
+      obj
+        .iter()
+        .filter_map(|(dc, key)| Some((dc.parse().ok()?, crate::tdata::parse_auth_key(key.as_str()?)?)))
+        .collect()
+    })
+    .unwrap_or_default();
+  keys.sort_by_key(|(dc, _)| *dc);
+  if !keys.iter().any(|(dc, _)| *dc == main_dc_id) {
+    return Err("Нет ключа авторизации для основного DC".into());
+  }
+
+  let picked = app.dialog().file().set_title("Куда сохранить tdata").blocking_pick_folder();
+  let Some(folder) = picked.and_then(|f| f.into_path().ok()) else { return Ok(Value::Null) };
+  let target = folder.join("tdata");
+  if fs::read_dir(&target).is_ok_and(|mut entries| entries.next().is_some()) {
+    return Err(format!("Папка {} уже существует и не пуста", target.display()));
+  }
+
+  crate::tdata::write(&target, &crate::tdata::Session { user_id, main_dc_id, keys })?;
+  Ok(json!(target.to_string_lossy()))
+}

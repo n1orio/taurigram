@@ -14,6 +14,8 @@ mod paths;
 mod protocol;
 mod proxy;
 mod settings;
+mod system_proxy;
+mod tdata;
 mod tray;
 
 use deeplink::Deeplink;
@@ -173,6 +175,7 @@ pub fn run() {
     commands::ethernet_clear_last_crashed_plugin,
     commands::ethernet_report_plugin_crash,
     commands::ethernet_set_unread_count,
+    commands::ethernet_export_tdata,
     commands::notif_ready,
     commands::notif_clicked,
     commands::notif_dismissed,

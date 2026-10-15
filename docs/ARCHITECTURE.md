@@ -3,15 +3,15 @@
 ## Десктопная оболочка: Tauri 2
 
 С октября 2026 клиент работает на **Tauri** (Rust + системный WebView: WebView2 на
-Windows, WebKitGTK на Linux) вместо Electron. Код оболочки — `client/tauri/`.
+Windows, WebKitGTK на Linux, WKWebView на macOS) вместо Electron. Код оболочки — `client/tauri/`.
 
 | Electron (было)                         | Tauri (стало)                                   |
 |-----------------------------------------|-------------------------------------------------|
 | `main.cjs`, протокол `app://telegram/`  | `src/lib.rs`, `src/protocol.rs`, `app://localhost/` (Windows: `http://app.localhost/`) |
 | `preload.cjs` → `window.ethernetDesktop` | `web/bridge.js` (init-скрипт) → те же методы через `invoke` |
 | `hermes-fs.cjs`, `ethernet-settings.cjs` | `src/commands.rs`, `src/settings.rs`            |
-| `proxy-engine.cjs` (`session.setProxy`) | `src/proxy.rs`: локальный SOCKS5-релей, через который идёт весь трафик WebView; прокси с логином/паролем, переключение без перезапуска |
-| `notification-manager.cjs` + html       | `src/notifications.rs` + `web/notifications.html` |
+| `proxy-engine.cjs` (`session.setProxy`) | `src/proxy.rs`: локальный SOCKS5-релей, через который идёт весь трафик WebView; свой прокси с логином/паролем → системный прокси ОС (`src/system_proxy.rs`) → напрямую |
+| `notification-manager.cjs` + html       | `src/notifications.rs` + `web/notifications.html`; на Wayland — системные уведомления |
 | HTML-меню трея                          | нативное меню трея (`src/tray/`)                |
 | `loader.js`                             | `web/loader.js` (без изменений по API)          |
 
@@ -33,6 +33,42 @@ npm run app:build   # сборка веб-клиента в dist/
 npm run app         # tauri dev
 npm run dist:win    # / dist:linux — релизные сборки
 ```
+
+## Дорожная карта
+
+| Задача | Статус |
+|---|---|
+| UI тем, плагинов, редактор тем, сеть, функции | ✅ |
+| Событийная шина плагинов (`beforeRequest`, `onRequest`, `onUpdate`, `afterUpdate`) | ✅ |
+| Русский язык по умолчанию (по языку системы) | ✅ |
+| Имя, иконка, установщики Windows / Linux / macOS | ✅ |
+| Автообновления (Tauri updater, `latest.json` в релизах GitHub) | ✅ |
+| Экспорт сессии в tdata (Telegram Desktop) | ✅ |
+| Системный прокси ОС в режиме «без своего прокси» | ✅ (без PAC) |
+| Уведомления на Wayland — системные (D-Bus) с переходом в чат | ✅ |
+| Проверка на живой Windows и macOS | ⏳ сборки есть в CI, ручной проверки не было |
+| Подпись установщиков (SmartScreen / Gatekeeper) | ✖ не планируется |
+| Интерфейс ближе к Telegram Desktop | ❓ по желанию |
+
+## Автообновления
+
+Ключ подписи — `~/.tauri/taurigram-updater.key` у владельца репозитория и секрет
+`TAURI_SIGNING_PRIVATE_KEY` в GitHub. Публичный ключ — `plugins.updater.pubkey`
+в `client/tauri/tauri.conf.json`. **Если потерять приватный ключ, установленные
+клиенты не смогут обновиться** — храните резервную копию.
+
+Выпуск версии:
+1. поднять `version` в `client/tauri/tauri.conf.json` (и `client/tauri/Cargo.toml`);
+2. `git tag vX.Y.Z && git push origin vX.Y.Z`;
+3. дождаться GitHub Actions и опубликовать черновик релиза — клиенты увидят кнопку
+   «Обновить» (проверка раз в 10 минут). Обновляются установщик Windows, AppImage и
+   macOS-приложение; `.deb` обновляется пакетным менеджером.
+
+## Экспорт сессии в tdata
+
+Настройки → Taurigram → «Экспорт сессии в Telegram Desktop». Создаётся папка `tdata`
+(без локального код-пароля) с ключами авторизации текущего аккаунта
+(`client/tauri/src/tdata.rs`). Формат повторяет `storage_*` из исходников tdesktop.
 
 ---
 

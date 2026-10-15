@@ -16,7 +16,7 @@ export interface GeoNetworkInfo {
   countryCode: string;
   city: string;
   org: string;
-  mode: 'bypass' | 'custom' | 'direct';
+  mode: 'bypass' | 'custom' | 'system' | 'direct';
 }
 
 function getCountryFlag(code?: string): string {

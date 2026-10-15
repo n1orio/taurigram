@@ -31,6 +31,22 @@
     return unlisten;
   }
 
+  // `blob:`-ссылки живут только в этом окне — окну уведомлений и ОС передаём `data:`-URL
+  async function toDataUrl(url) {
+    if (typeof url !== 'string' || !url.startsWith('blob:')) return url;
+    try {
+      const blob = await (await fetch(url)).blob();
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => resolve(undefined);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return undefined;
+    }
+  }
+
   const desktopBridge = {
     // Темы
     themesList: () => invoke('ethernet_themes_list'),
@@ -72,7 +88,10 @@
     proxyParseLink: (link) => invoke('ethernet_proxy_parse_link', { link }),
     proxyTestPing: (proxy) => invoke('ethernet_proxy_test_ping', { proxy }),
     // Кастомные всплывающие уведомления
-    showNotification: (payload) => invoke('ethernet_show_notification', { payload }),
+    showNotification: async (payload) => {
+      const icon = await toDataUrl(payload?.icon);
+      return invoke('ethernet_show_notification', { payload: { ...payload, icon } });
+    },
     onNotificationClick: (cb) => listen('hermes:notification-clicked', (data) => cb(data)),
     // Глобальное отключение уведомлений
     notificationsDisabledGet: () => invoke('ethernet_notifications_disabled_get'),
@@ -90,6 +109,8 @@
       pluginId: String(pluginId),
       error: error === undefined ? undefined : String(error),
     }),
+    // Экспорт сессии в Telegram Desktop (tdata)
+    exportTdata: (session) => invoke('ethernet_export_tdata', { session }),
     // Счётчик непрочитанных для панели задач / трея
     setUnreadCount: (count) => invoke('ethernet_set_unread_count', { count: Number(count) || 0 }),
   };

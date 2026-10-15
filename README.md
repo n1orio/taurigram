@@ -35,13 +35,19 @@
   - Built-in Safe Mode and automatic crash isolation.
 
 - **🛡️ Built-in Proxy Engine**:
+  - Uses the OS system proxy when no custom proxy is set.
   - SOCKS5 & HTTP/HTTPS proxy support with one-click TG proxy link import (`tg://socks?` / `tg://proxy?`).
   - Ping latency testing and automatic fallback.
 
 - **⚡ Native Desktop Integration**:
   - Frameless window with custom interactive topbar and window controls.
   - System tray support with customizable notifications and close-to-tray behavior.
-  - Universal cross-platform packaging for Windows and Linux.
+  - Universal cross-platform packaging for Windows, Linux and macOS.
+  - Auto-updates from GitHub Releases (Windows installer, AppImage, macOS app).
+  - Native notifications on Wayland.
+
+- **📦 Session export to Telegram Desktop**:
+  - Export the current session as a `tdata` folder to sign in to the official desktop app without a code.
 
 ---
 

@@ -1,8 +1,8 @@
-// Встроенный прокси-движок Ethernet.
+// Встроенный прокси-движок Taurigram.
 //
 // Все окна WebView ходят в сеть через локальный SOCKS5-релей на 127.0.0.1.
-// Релей на каждое соединение читает настройки и либо подключается напрямую
-// (работает с TUN/VPN), либо через пользовательский SOCKS5/HTTP-прокси с авторизацией.
+// Релей на каждое соединение выбирает маршрут: пользовательский SOCKS5/HTTP-прокси
+// с авторизацией, иначе системный прокси ОС, иначе прямое подключение (работает с TUN/VPN).
 // Так прокси переключается без пересоздания WebView, а логин/пароль прокси
 // поддерживаются на всех платформах.
 
@@ -18,6 +18,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::watch;
 
 use crate::settings;
+use crate::system_proxy::{self, Protocol, Upstream};
 
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
 const PING_TIMEOUT: Duration = Duration::from_secs(5);
@@ -70,22 +71,50 @@ fn relay_url(port: u16) -> url::Url {
 }
 
 /// Применяет текущие настройки сети: рвёт открытые соединения и оповещает окна
-pub fn apply_network_state(app: &AppHandle) -> Value {
+pub fn apply_network_state(app: &AppHandle) {
+  system_proxy::invalidate();
   if let Some(relay) = RELAY.get() {
     relay.generation.send_modify(|g| *g += 1);
   }
-  let result = match settings::active_proxy() {
-    Some(proxy) => {
-      log::info!("[ProxyEngine] Custom proxy mode: {}", proxy.get("name").and_then(Value::as_str).unwrap_or(""));
-      json!({ "mode": "custom", "proxy": proxy })
-    }
-    None => {
-      log::info!("[ProxyEngine] Direct connection active");
-      json!({ "mode": "direct" })
-    }
-  };
+  log::info!("[ProxyEngine] Network mode: {}", network_mode());
   let _ = app.emit("hermes:network-changed", ());
-  result
+}
+
+fn network_mode() -> &'static str {
+  if settings::active_proxy().is_some() {
+    "custom"
+  } else if system_proxy::get().is_some() {
+    "system"
+  } else {
+    "direct"
+  }
+}
+
+fn upstream_from_settings(proxy: &Value) -> Option<Upstream> {
+  let text = |v: Option<&Value>| v.and_then(Value::as_str).unwrap_or_default().to_string();
+  let auth = proxy.get("auth");
+  Some(Upstream {
+    protocol: if proxy.get("protocol").and_then(Value::as_str) == Some("http") { Protocol::Http } else { Protocol::Socks5 },
+    server: text(proxy.get("server")),
+    port: proxy.get("port").and_then(Value::as_u64).filter(|p| (1..=65535).contains(p))? as u16,
+    username: text(auth.and_then(|a| a.get("username"))),
+    password: text(auth.and_then(|a| a.get("password"))),
+  })
+}
+
+fn is_loopback(host: &str) -> bool {
+  host.eq_ignore_ascii_case("localhost") || host.parse::<IpAddr>().is_ok_and(|ip| ip.is_loopback())
+}
+
+/// Маршрут для соединения: свой прокси > системный прокси > напрямую (локальные адреса — всегда напрямую)
+fn resolve_upstream(host: &str) -> Option<Upstream> {
+  if is_loopback(host) {
+    return None;
+  }
+  match settings::active_proxy() {
+    Some(proxy) => upstream_from_settings(&proxy),
+    None => system_proxy::get(),
+  }
 }
 
 // --- Локальный SOCKS5-сервер ---
@@ -156,20 +185,13 @@ async fn handle_client(mut client: TcpStream, mut generation: watch::Receiver<u6
 }
 
 async fn connect_upstream(host: &str, port: u16) -> Result<TcpStream, String> {
-  let Some(proxy) = settings::active_proxy() else {
+  let Some(upstream) = resolve_upstream(host) else {
     return TcpStream::connect((host, port)).await.map_err(|e| e.to_string());
   };
-  let server = proxy.get("server").and_then(Value::as_str).unwrap_or_default();
-  let proxy_port = proxy.get("port").and_then(Value::as_u64).unwrap_or(0) as u16;
-  let auth = proxy.get("auth");
-  let username = auth.and_then(|a| a.get("username")).and_then(Value::as_str).unwrap_or_default();
-  let password = auth.and_then(|a| a.get("password")).and_then(Value::as_str).unwrap_or_default();
-
-  let mut stream = TcpStream::connect((server, proxy_port)).await.map_err(|e| e.to_string())?;
-  if proxy.get("protocol").and_then(Value::as_str) == Some("http") {
-    http_connect(&mut stream, host, port, username, password).await?;
-  } else {
-    socks5_connect(&mut stream, host, port, username, password).await?;
+  let mut stream = TcpStream::connect((upstream.server.as_str(), upstream.port)).await.map_err(|e| e.to_string())?;
+  match upstream.protocol {
+    Protocol::Http => http_connect(&mut stream, host, port, &upstream.username, &upstream.password).await?,
+    Protocol::Socks5 => socks5_connect(&mut stream, host, port, &upstream.username, &upstream.password).await?,
   }
   Ok(stream)
 }
@@ -284,7 +306,7 @@ pub async fn test_ping(proxy: &Value) -> i64 {
 // --- Гео-IP текущего соединения (через тот же путь, что и WebView) ---
 
 pub async fn network_geo_info() -> Value {
-  let mode = if settings::active_proxy().is_some() { "custom" } else { "direct" };
+  let mode = network_mode();
   let unknown = json!({
     "ip": "Не определен",
     "country": "Неизвестно",

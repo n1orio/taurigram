@@ -1,4 +1,6 @@
-// Кастомные всплывающие уведомления: прозрачное окно поверх всех в правом нижнем углу экрана.
+// Всплывающие уведомления: прозрачное окно поверх всех в правом нижнем углу экрана.
+// На Wayland приложение не может задать позицию своего окна, поэтому там
+// используются системные уведомления (D-Bus) с переходом в чат по клику.
 
 use std::sync::Mutex;
 
@@ -26,6 +28,11 @@ static STATE: Mutex<NotifState> = Mutex::new(NotifState { is_ready: false, pendi
 
 pub fn show(app: &AppHandle, payload: Value) {
   if settings::get_notifications_disabled() {
+    return;
+  }
+  #[cfg(target_os = "linux")]
+  if is_wayland() {
+    native::show(app, payload);
     return;
   }
   if ensure_window(app).is_none() {
@@ -117,4 +124,78 @@ fn place(win: &WebviewWindow, logical_height: f64) {
   let y = area.position.y as f64 + area.size.height as f64 - height - margin;
   let _ = win.set_size(PhysicalSize::new(width as u32, height as u32));
   let _ = win.set_position(PhysicalPosition::new(x as i32, y as i32));
+}
+
+#[cfg(target_os = "linux")]
+fn is_wayland() -> bool {
+  let backend_is_x11 = std::env::var("GDK_BACKEND").is_ok_and(|b| b.starts_with("x11"));
+  let has_wayland = std::env::var_os("WAYLAND_DISPLAY").is_some()
+    || std::env::var("XDG_SESSION_TYPE").is_ok_and(|t| t == "wayland");
+  has_wayland && !backend_is_x11
+}
+
+#[cfg(target_os = "linux")]
+mod native {
+  use std::path::PathBuf;
+
+  use base64::Engine;
+  use notify_rust::{Hint, Notification};
+  use serde_json::{Value, json};
+  use tauri::{AppHandle, Manager};
+
+  const DEFAULT_ACTION: &str = "default";
+
+  pub fn show(app: &AppHandle, payload: Value) {
+    let text = |k: &str| payload.get(k).and_then(Value::as_str).unwrap_or_default().to_string();
+    let click_data = json!({ "chatId": payload.get("chatId"), "messageId": payload.get("messageId") });
+    let is_silent = payload.get("isSilent").and_then(Value::as_bool).unwrap_or(false);
+    let avatar = save_avatar(app, &text("icon"));
+    let (title, body) = (text("title"), text("body"));
+    let app = app.clone();
+
+    // Ожидание клика блокирует поток до закрытия уведомления
+    std::thread::spawn(move || {
+      let mut notification = Notification::new();
+      notification
+        .appname("Taurigram")
+        .summary(&title)
+        .body(&body)
+        .icon("taurigram")
+        .action(DEFAULT_ACTION, "Открыть");
+      if let Some(path) = avatar.as_ref().and_then(|p| p.to_str()) {
+        notification.image_path(path);
+      }
+      if is_silent {
+        notification.hint(Hint::SuppressSound(true));
+      }
+      match notification.show() {
+        Ok(handle) => handle.wait_for_action(|action| {
+          if action == DEFAULT_ACTION {
+            super::handle_click(&app, click_data);
+          }
+        }),
+        Err(err) => log::error!("[notifications] D-Bus notification failed: {err}"),
+      }
+      if let Some(path) = avatar {
+        let _ = std::fs::remove_file(path);
+      }
+    });
+  }
+
+  /// Аватар приходит как `data:image/...;base64,...` — сохраняем во временный файл для `image-path`
+  fn save_avatar(app: &AppHandle, icon: &str) -> Option<PathBuf> {
+    let (meta, data) = icon.strip_prefix("data:")?.split_once(',')?;
+    let ext = match meta.split(';').next()? {
+      "image/png" => "png",
+      "image/jpeg" => "jpg",
+      "image/webp" => "webp",
+      _ => return None,
+    };
+    let bytes = base64::engine::general_purpose::STANDARD.decode(data).ok()?;
+    let dir = app.path().app_cache_dir().ok()?;
+    std::fs::create_dir_all(&dir).ok()?;
+    let path = dir.join(format!("notification-{}.{ext}", uuid::Uuid::new_v4().simple()));
+    std::fs::write(&path, bytes).ok()?;
+    Some(path)
+  }
 }
