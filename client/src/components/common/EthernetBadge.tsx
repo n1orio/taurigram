@@ -118,8 +118,8 @@ const EthernetBadge: FC<OwnProps> = ({ peer, peerId, className, size }) => {
   }
 
   const tooltip = badgeType === 'development'
-    ? 'Разработчик Taurigram'
-    : 'Саппортер Taurigram';
+    ? 'Разработчик Ethernet'
+    : 'Саппортер Ethernet';
 
   const iconStyle = size ? buildStyle(`width: ${size}px`, `height: ${size}px`) : undefined;
 
@@ -153,9 +153,9 @@ const EthernetBadge: FC<OwnProps> = ({ peer, peerId, className, size }) => {
           >
             <EthernetIconSvg />
           </div>
-          <div className={styles.modalTitle}>Taurigram Supporter</div>
+          <div className={styles.modalTitle}>Ethernet Supporter</div>
           <div className={styles.modalText}>
-            За поддержку проекта ethernet.{' '}
+            За поддержку проекта Ethernet (оригинальный автор).{' '}
             <a
               href="https://t.me/ethernetgram"
               onClick={handleChannelClick}

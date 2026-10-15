@@ -44,7 +44,7 @@ const SettingsEthernet: FC<OwnProps> = ({ isActive, onReset }) => {
   const openThemes = useLastCallback(() => openSettingsScreen({ screen: SettingsScreens.EthernetThemes }));
   const openPlugins = useLastCallback(() => openSettingsScreen({ screen: SettingsScreens.EthernetPlugins }));
   const openExperimental = useLastCallback(() => openSettingsScreen({ screen: SettingsScreens.Experimental }));
-  const openEthernetChannel = useLastCallback(() => openChatByUsername({ username: 'ethernetgram' }));
+  const openEthernetChannel = useLastCallback(() => openChatByUsername({ username: 'niori0' }));
 
   return (
     <div className="settings-content custom-scroll">
@@ -101,9 +101,9 @@ const SettingsEthernet: FC<OwnProps> = ({ isActive, onReset }) => {
           type="button"
           className={styles.ethernetButton}
           onClick={openEthernetChannel}
-          title="@ethernetgram"
+          title="@niori0"
         >
-          ethernet
+          taurigram
         </button>
       </div>
     </div>
